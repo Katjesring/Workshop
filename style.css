@@ -24,8 +24,6 @@ body {
 #model-container {
     position: absolute;
     z-index: 2;
-    left: 50%;
-    transform: translateX(-50%);
     width: 50%;
 }
 
