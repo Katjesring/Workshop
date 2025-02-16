@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <script type="importmap">
+		{
+			"imports": {
+				"three": "https://unpkg.com/three@0.161.0/build/three.module.js",
+				"three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/",
+				"@lumaai/luma-web": "https://unpkg.com/@lumaai/luma-web@0.2.2/dist/library/luma-web.module.js",
+				"@tweenjs/tween.js": "https://unpkg.com/@tweenjs/tween.js@^20.0.0/dist/tween.umd.js",
+				"@monogrid/gainmap-js": "https://unpkg.com/@monogrid/gainmap-js@3.0.0/dist/decode.js"
+			}
+		}
+	</script>
+
+    <script type="module" src="main.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+
+    <title>My Website</title>
+</head>
+<body>
+    <div id="splat-container">
+    </div>
+
+    <div id="model-container">
+    </div>
+
+    <!-- Textbereich für die Beschreibung des aktuellen Splats -->
+    <div id="splat-text">Lade Splat...</div>
+
+    <!-- Pfeile zur Navigation -->
+    <button id="arrow-left" class="arrow">&lt;</button>
+    <button id="arrow-right" class="arrow">&gt;</button>
+
+    <!-- 3D Szene wird hier eingebettet -->
+    <script type="module" src="main.js"></script>
+
+    
+</body>
+</html>

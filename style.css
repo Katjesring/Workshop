@@ -1,0 +1,59 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+/* Text, der unter dem Splat angezeigt wird */
+#splat-text {
+    position: absolute;
+    top: calc(50% + 200px); /* Position unter dem Splat */
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 18px;
+    color: white;
+    text-align: center;
+    z-index: 10;
+}
+
+#splat-container {
+    position: absolute;
+    z-index: 1;
+}
+
+#model-container {
+    position: absolute;
+    z-index: 2;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50%;
+}
+
+/* Pfeile für die Navigation */
+.arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 36px;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    z-index: 20;
+}
+
+#arrow-left {
+    left: 20px;
+}
+
+#arrow-right {
+    right: 20px;
+}
+
+/* Einfache Stile für den Hintergrund */
+body {
+    background-color: black;
+}
+
+    
