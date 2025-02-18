@@ -70,6 +70,9 @@ function setupScene1() {
     splat1.onLoad = () => {
         sceneSplat1.add(splat1);
     };
+
+    document.getElementById('splat-text').innerText = "Splat 1: Beschreibung";
+    
     
 }
 
@@ -170,17 +173,17 @@ function setupInput() {
             if (event.key === 'ArrowRight') {
                 console.log('ArrowRight pressed');
                 if (currentScene === sceneSplat1) {
-                    changeScene(sceneSplat2, cameraSplat2, startPositions[1]);
+                    changeScene(sceneSplat2, cameraSplat2, startPositions[1], "Splat 2: Andere Beschreibung");
                 } else {
-                    changeScene(sceneSplat1, cameraSplat1, startPositions[0]);
+                    changeScene(sceneSplat1, cameraSplat1, startPositions[0], "Splat 1: Beschreibung");
                 }
             }
             if (event.key === 'ArrowLeft') {
                 console.log('ArrowLeft pressed');
                 if (currentScene === sceneSplat1) {
-                    changeScene(sceneSplat2, cameraSplat2, startPositions[1]);
+                    changeScene(sceneSplat2, cameraSplat2, startPositions[1], "Splat 2: Andere Beschreibung");
                 } else {
-                    changeScene(sceneSplat1, cameraSplat1, startPositions[0]);
+                    changeScene(sceneSplat1, cameraSplat1, startPositions[0], "Splat 1: Beschreibung");
                 }
             }
         });
@@ -189,28 +192,29 @@ function setupInput() {
         document.getElementById('arrow-left').addEventListener('click', () => {
             console.log('ArrowLeft clicked');
             if (currentScene === sceneSplat1) {
-                changeScene(sceneSplat2, cameraSplat2, startPositions[1]);
+                changeScene(sceneSplat2, cameraSplat2, startPositions[1], "Splat 2: Andere Beschreibung");
             } else {
-                changeScene(sceneSplat1, cameraSplat1, startPositions[0]);
+                changeScene(sceneSplat1, cameraSplat1, startPositions[0], "Splat 1: Beschreibung");
             }
         });
 
         document.getElementById('arrow-right').addEventListener('click', () => {
             console.log('ArrowRight clicked');
             if (currentScene === sceneSplat1) {
-                changeScene(sceneSplat2, cameraSplat2, startPositions[1]);
+                changeScene(sceneSplat2, cameraSplat2, startPositions[1], "Splat 2: Andere Beschreibung");
             } else {
-                changeScene(sceneSplat1, cameraSplat1, startPositions[0]);
+                changeScene(sceneSplat1, cameraSplat1, startPositions[0], "Splat 1: Beschreibung");
             }
         });
     });
 }
 
-function changeScene(scene, camera, startPosition) {
+function changeScene(scene, camera, startPosition, description) {
     currentScene = scene;
     currentCamera = camera;
     camera.position.set(startPosition.x, startPosition.y, startPosition.z);
     orbitControls.object = currentCamera;
+    document.getElementById('splat-text').innerText = description;
 }
 
 // Animation loop
