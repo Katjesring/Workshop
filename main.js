@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Uniform } from "three";
 import { LumaSplatsSemantics, LumaSplatsThree } from "@lumaai/luma-web";
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -6,12 +7,20 @@ import { OrbitControls } from 'https://unpkg.com/three@0.161.0/examples/jsm/cont
 
 let renderer, renderer3DText, orbitControls, orbitControls3DText;
 let currentScene, currentCamera;
+let xpositive = new Uniform(10);
+let ypositive = new Uniform(10);
+let zpositive = new Uniform(10);
+let xnegative = new Uniform(-10);
+let ynegative = new Uniform(-10);
+let znegative = new Uniform(-10);
 
-let sceneSplat1, sceneSplat2;
-let cameraSplat1, cameraSplat2;
+let sceneSplat1, sceneSplat2, sceneSplat3;
+let cameraSplat1, cameraSplat2, cameraSplat3;
 let startPositions = [new THREE.Vector3(0, 10, 25), new THREE.Vector3(-1.5, 0, -10)];
 
-let splat1, splat2;
+let description = ["Splat 1: Beschreibung", "Splat 2: In Zukunft würde ich gerne Reisen und die Welt erkunden.", "Splat 3: Noch eine Beschreibung"];
+
+let splat1, splat2, splat3;
 
 //3D Text animation
 let titleMesh, scene3DText, camera3DText;
@@ -32,9 +41,11 @@ function init() {
 
     setupScene1();
     setupScene2();
+    setupScene3();
 
     currentScene = sceneSplat1;
     currentCamera = cameraSplat1;
+    document.getElementById('splat-text').innerText = description[0];
 
     orbitControls = new OrbitControls(currentCamera, renderer.domElement);
     orbitControls.enableDamping = true;
@@ -71,7 +82,6 @@ function setupScene1() {
         sceneSplat1.add(splat1);
     };
 
-    document.getElementById('splat-text').innerText = "Splat 1: Beschreibung";
     
     
 }
@@ -126,6 +136,61 @@ function setupScene2() {
     };
 }
 
+// Initialize splat3
+function setupScene3() {
+    sceneSplat3 = new THREE.Scene();
+
+    cameraSplat3 = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+    cameraSplat3.position.set(startPositions[1].x, startPositions[1].y, startPositions[1].z);
+
+    splat3 = new LumaSplatsThree({
+        source: 'https://lumalabs.ai/capture/aa1a06b9-d6f0-4b44-8a98-f1d11ed6dd04',
+        enableThreeShaderIntegration: true,
+        particleRevealEnabled: false,
+    });
+    splat3.position.set(0, 0, 0);
+    splat3.scale.set(3, 3, 3);  // Set scale to a visible size
+    
+    splat3.setShaderHooks({
+        vertexShaderHooks: {
+            additionalUniforms: {
+                xPos: ['float', xpositive],
+                yPos: ['float', ypositive],
+                zPos: ['float', zpositive],
+                xNeg: ['float', xnegative],
+                yNeg: ['float', ynegative],
+                zNeg: ['float', znegative],
+            },
+
+            getSplatTransform: `
+            (vec3 position, uint layersBitmask) {
+                float x = 1.;
+                float z = 1.;
+                float y = 1.;
+                if(position.x > xPos || position.x < xNeg
+                || position.y > yPos || position.y < yNeg
+                || position.z > zPos || position.z < zNeg)
+                {
+                    x = 0.0;
+                    y = 0.0;
+                    z = 0.0;
+                }
+                return mat4(
+                    x, 0., 0., 0,
+                    0., y, 0., 0,
+                    0., 0., z, 0,
+                    1., 1., 1., 1.
+                );
+            }
+        `,
+        }
+    }); 
+
+    splat3.onLoad = () => {
+        sceneSplat3.add(splat3);
+    };
+}
+
 function setup3DText() {
     // Scene for the 3D text
     scene3DText = new THREE.Scene();
@@ -164,49 +229,96 @@ function setupHDR() {
         hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
         sceneSplat2.background = hdrTexture;
     });
+    hdrLoader.loadAsync('/hdr/misty_pines_2k.hdr').then(hdrTexture => {
+        hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
+        sceneSplat3.background = hdrTexture;
+    });
 }
 
 function setupInput() {
     // Event listeners for keyboard and click-based navigation
-    document.addEventListener('DOMContentLoaded', () => {
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'ArrowRight') {
-                console.log('ArrowRight pressed');
-                if (currentScene === sceneSplat1) {
-                    changeScene(sceneSplat2, cameraSplat2, startPositions[1], "Splat 2: Andere Beschreibung");
-                } else {
-                    changeScene(sceneSplat1, cameraSplat1, startPositions[0], "Splat 1: Beschreibung");
-                }
+   document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowRight') {
+            console.log('ArrowRight pressed');
+            switch (currentScene) {
+                case sceneSplat1:
+                    changeScene(sceneSplat2, cameraSplat2, startPositions[1], description[1]);
+                    break;
+                case sceneSplat2:
+                    changeScene(sceneSplat3, cameraSplat3, startPositions[1], description[2]);
+                    break;
+                case sceneSplat3:
+                    changeScene(sceneSplat1, cameraSplat1, startPositions[0], description[0]);
+                    break;
             }
-            if (event.key === 'ArrowLeft') {
-                console.log('ArrowLeft pressed');
-                if (currentScene === sceneSplat1) {
-                    changeScene(sceneSplat2, cameraSplat2, startPositions[1], "Splat 2: Andere Beschreibung");
-                } else {
-                    changeScene(sceneSplat1, cameraSplat1, startPositions[0], "Splat 1: Beschreibung");
-                }
+        }
+        if (event.key === 'ArrowLeft') {
+            console.log('ArrowLeft pressed');
+            switch (currentScene) {
+                case sceneSplat1:
+                    changeScene(sceneSplat3, cameraSplat3, startPositions[1], description[2]);
+                    break;
+                case sceneSplat3:
+                    changeScene(sceneSplat2, cameraSplat2, startPositions[1], description[1]);
+                    break;
+                case sceneSplat2:
+                    changeScene(sceneSplat1, cameraSplat1, startPositions[0], description[0]);
+                    break;
             }
-        });
-
-        // Event listeners for mouse navigation
-        document.getElementById('arrow-left').addEventListener('click', () => {
-            console.log('ArrowLeft clicked');
-            if (currentScene === sceneSplat1) {
-                changeScene(sceneSplat2, cameraSplat2, startPositions[1], "Splat 2: Andere Beschreibung");
-            } else {
-                changeScene(sceneSplat1, cameraSplat1, startPositions[0], "Splat 1: Beschreibung");
-            }
-        });
-
-        document.getElementById('arrow-right').addEventListener('click', () => {
-            console.log('ArrowRight clicked');
-            if (currentScene === sceneSplat1) {
-                changeScene(sceneSplat2, cameraSplat2, startPositions[1], "Splat 2: Andere Beschreibung");
-            } else {
-                changeScene(sceneSplat1, cameraSplat1, startPositions[0], "Splat 1: Beschreibung");
-            }
-        });
+        }
+        if (event.key === 'x') {
+            console.log('ArrowLeft pressed');
+            xpositive.value = xpositive.value - 0.1;
+        }
+        if (event.key === 'y') {
+            ypositive.value = ypositive.value - 0.1;
+        }
+        if (event.key === 'z') {
+            zpositive.value = zpositive.value - 0.1;
+        }
+        if (event.key === 'a') {
+            xnegative.value = xnegative.value + 0.1;
+        }
+        if (event.key === 'b') {
+            ynegative.value = ynegative.value + 0.1;
+        }
+        if (event.key === 'c') {
+            znegative.value = znegative.value + 0.1;
+        }
     });
+
+    // Event listeners for mouse navigation
+    document.getElementById('arrow-left').addEventListener('click', () => {
+        console.log('ArrowLeft clicked');
+        switch (currentScene) {
+            case sceneSplat1:
+                changeScene(sceneSplat3, cameraSplat3, startPositions[1], description[2]);
+                break;
+            case sceneSplat3:
+                changeScene(sceneSplat2, cameraSplat2, startPositions[1], description[1]);
+                break;
+            case sceneSplat2:
+                changeScene(sceneSplat1, cameraSplat1, startPositions[0], description[0]);
+                break;
+        }
+    });
+
+    document.getElementById('arrow-right').addEventListener('click', () => {
+        console.log('ArrowRight clicked');
+        switch (currentScene) {
+            case sceneSplat1:
+                changeScene(sceneSplat2, cameraSplat2, startPositions[1], description[1]);
+                break;
+            case sceneSplat2:
+                changeScene(sceneSplat3, cameraSplat3, startPositions[1], description[2]);
+                break;
+            case sceneSplat3:
+                changeScene(sceneSplat1, cameraSplat1, startPositions[0], description[0]);
+                break;
+        }
+    });
+});
 }
 
 function changeScene(scene, camera, startPosition, description) {
@@ -224,11 +336,11 @@ function animate() {
         {
             splat1.skybox.visible = false;
         }
-        /*
-        if(splat2 != null)
+        
+        if(splat3 != null)
             {
-                splat2.skybox.visible = false;
-            } */
+                splat3.skybox.visible = false;
+            } 
     // Hovering animation for the title
     if (titleMesh) {
         titleMesh.position.x += hoverDirection * hoverSpeed;
