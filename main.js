@@ -34,9 +34,7 @@ let videoContainer = document.getElementById('video-container');
 let myImage;
 let myVideo;
 
-//reihenfolge des gezeigten contents festlegen
-let sequence = [];
-let currentIndex = 0;
+
 
 init();
 renderer.setAnimationLoop(animate);
@@ -52,7 +50,7 @@ function init() {
     setupScene2();
     setupScene3();
 
-    setupImagScene();
+    setupImageScene();
     setupVideoScene();
 
     currentScene = sceneSplat1;
@@ -204,7 +202,7 @@ function setupScene3() {
 }
 
 
-function setupImagScene() {
+function setupImageScene() {
     // Create a new scene for the image
     imageContainer.style.display = 'block';
     myImage= new Image(100, 200);
@@ -262,37 +260,28 @@ function setupHDR() {
     });
 }
 
+// Reihenfolge des gezeigten Contents festlegen (nachdem alles initialisiert wurde)
+let sequence = [
+    { type: 'image', src: '/images/pearl.jpg', description: 'Bild: Pearl' },
+    { type: 'splat', scene: sceneSplat1, camera: cameraSplat1, startPosition: startPositions[0], description: description[0] },
+    { type: 'splat', scene: sceneSplat2, camera: cameraSplat2, startPosition: startPositions[1], description: description[1] },
+    { type: 'splat', scene: sceneSplat3, camera: cameraSplat3, startPosition: startPositions[1], description: description[2] }
+];
+let currentIndex = 0;
+
+
+
 function setupInput() {
     // Event listeners for keyboard and click-based navigation
    document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (event) => {
         if (event.key === 'ArrowRight') {
-            console.log('ArrowRight pressed');
-            switch (currentScene) {
-                case sceneSplat1:
-                    changeScene(sceneSplat2, cameraSplat2, startPositions[1], description[1]);
-                    break;
-                case sceneSplat2:
-                    changeScene(sceneSplat3, cameraSplat3, startPositions[1], description[2]);
-                    break;
-                case sceneSplat3:
-                    changeScene(sceneSplat1, cameraSplat1, startPositions[0], description[0]);
-                    break;
-            }
+            currentIndex = (currentIndex + 1) % sequence.length;
+            showCurrentContent();
         }
         if (event.key === 'ArrowLeft') {
-            console.log('ArrowLeft pressed');
-            switch (currentScene) {
-                case sceneSplat1:
-                    changeScene(sceneSplat3, cameraSplat3, startPositions[1], description[2]);
-                    break;
-                case sceneSplat3:
-                    changeScene(sceneSplat2, cameraSplat2, startPositions[1], description[1]);
-                    break;
-                case sceneSplat2:
-                    changeScene(sceneSplat1, cameraSplat1, startPositions[0], description[0]);
-                    break;
-            }
+            currentIndex = (currentIndex - 1 + sequence.length) % sequence.length;
+            showCurrentContent();
         }
         if (event.key === 'x') {
             console.log('ArrowLeft pressed');
@@ -317,33 +306,12 @@ function setupInput() {
 
     // Event listeners for mouse navigation
     document.getElementById('arrow-left').addEventListener('click', () => {
-        console.log('ArrowLeft clicked');
-        switch (currentScene) {
-            case sceneSplat1:
-                changeScene(sceneSplat3, cameraSplat3, startPositions[1], description[2]);
-                break;
-            case sceneSplat3:
-                changeScene(sceneSplat2, cameraSplat2, startPositions[1], description[1]);
-                break;
-            case sceneSplat2:
-                changeScene(sceneSplat1, cameraSplat1, startPositions[0], description[0]);
-                break;
-        }
+        currentIndex = (currentIndex - 1 + sequence.length) % sequence.length;
+        showCurrentContent();
     });
-
     document.getElementById('arrow-right').addEventListener('click', () => {
-        console.log('ArrowRight clicked');
-        switch (currentScene) {
-            case sceneSplat1:
-                changeScene(sceneSplat2, cameraSplat2, startPositions[1], description[1]);
-                break;
-            case sceneSplat2:
-                changeScene(sceneSplat3, cameraSplat3, startPositions[1], description[2]);
-                break;
-            case sceneSplat3:
-                changeScene(sceneSplat1, cameraSplat1, startPositions[0], description[0]);
-                break;
-        }
+        currentIndex = (currentIndex + 1) % sequence.length;
+        showCurrentContent();
     });
 });
 }
@@ -356,21 +324,34 @@ function changeScene(scene, camera, startPosition, description) {
     document.getElementById('splat-text').innerText = description;
 }
 
-function changeContent(sequence) {
-    currentIndex = (currentIndex + 1) % sequence.length;
-    const currentContent = sequence[currentIndex];
-    if (currentContent.type === 'image') {
+// Funktion zum Anzeigen des aktuellen Contents
+function showCurrentContent() {
+    renderer.domElement.style.display = 'none';
+    imageContainer.style.display = 'none';
+    if (myImage) myImage.style.display = 'none';
+    videoContainer.style.display = 'none';
+    if (myVideo) myVideo.style.display = 'none';
+
+    const item = sequence[currentIndex];
+    if (item.type === 'splat') {
+        renderer.domElement.style.display = 'block';
+        changeScene(item.scene, item.camera, item.startPosition, item.description);
+    } else if (item.type === 'image') {
         imageContainer.style.display = 'block';
-        videoContainer.style.display = 'none';
-        myImage.src = currentContent.src;
-    } else if (currentContent.type === 'video') {
-        imageContainer.style.display = 'none';
-        videoContainer.style.display = 'block';
-        myVideo.src = currentContent.src;
-    } else if (currentContent.type === 'splat') {
-        changeScene(currentContent.scene, currentContent.camera, currentContent.startPosition, currentContent.description);
+        if (myImage) {
+            myImage.src = item.src;
+            myImage.style.display = 'block';
+        }
+        document.getElementById('splat-text').innerText = item.description || "Bild";
     }
+    // Video analog falls benötigt
 }
+
+
+
+
+
+
 
 // Animation loop
 function animate() {
