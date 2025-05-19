@@ -206,6 +206,8 @@ function setupImageScene() {
     imageContainer.style.display = 'none';
     myImage = new Image();
     myImage.style.display = 'none';
+    myImage.style.maxWidth = '100vw';
+    myImage.style.maxHeight = '100vh';
     imageContainer.appendChild(myImage);
 }
 
@@ -214,6 +216,8 @@ function setupVideoScene() {
     myVideo = document.createElement('video');
     myVideo.controls = true;
     myVideo.style.display = 'none';
+    myVideo.style.maxWidth = '100vw';
+    myVideo.style.maxHeight = '100vh';
     videoContainer.appendChild(myVideo);
 }
 
@@ -266,8 +270,10 @@ let sequence = [
     { type: 'splat', scene: sceneSplat1, camera: cameraSplat1, startPosition: startPositions[0], description: description[0] },
     { type: 'splat', scene: sceneSplat2, camera: cameraSplat2, startPosition: startPositions[1], description: description[1] },
     { type: 'splat', scene: sceneSplat3, camera: cameraSplat3, startPosition: startPositions[1], description: description[2] },
-    { type: 'image', src: '/images/pearl.jpg', description: 'Das Mädchen mit dem Perlenohrring', width: 600, height: 800 },
-    { type: 'video', src: '/videos/C0018.mp4', description: 'This is a Video', width: 1000, height: 800 },
+    { type: 'image', src: '/images/pearl.jpg', description: 'Das Mädchen mit dem Perlenohrring'},
+    // { type: 'image', src: '/images/pearl.jpg', description: 'Das Mädchen mit dem Perlenohrring', width: 600, height: 800}
+    { type: 'video', src: '/videos/C0019.mp4', description: 'This is a Video'},
+    //{ type: 'video', src: '/videos/C0019.mp4', description: 'This is a Video' , width: 1000, height: 800}
 ];
 let currentIndex = 0;
 
@@ -366,7 +372,12 @@ function showCurrentContent() {
             myVideo.style.display = 'block';
             if (item.width) myVideo.width = item.width;
             if (item.height) myVideo.height = item.height;
+            myVideo.autoplay = true;
+            myVideo.loop = true;
             myVideo.load();
+            // Für Autoplay ohne User-Interaktion ggf. muted setzen:
+            myVideo.muted = true;
+            myVideo.play();
         }
         document.getElementById('splat-text').innerText = item.description || "Video";
     }
