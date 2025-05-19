@@ -21,6 +21,17 @@ body {
     z-index: 1;
 }
 
+#image-container {
+    position: absolute;
+    z-index: 1;
+}
+
+#video-container {
+    position: absolute;
+    z-index: 1;
+}
+
+
 #model-container {
     position: absolute;
     z-index: 2;

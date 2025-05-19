@@ -29,6 +29,15 @@ let hoverDirection = 10;
 let hoverSpeed = 0.05;  // Hover speed
 let hoverHeight = 20;  // Maximum hover height
 
+let imageContainer = document.getElementById('image-container');
+let videoContainer = document.getElementById('video-container');
+let myImage;
+let myVideo;
+
+//reihenfolge des gezeigten contents festlegen
+let sequence = [];
+let currentIndex = 0;
+
 init();
 renderer.setAnimationLoop(animate);
 
@@ -42,6 +51,9 @@ function init() {
     setupScene1();
     setupScene2();
     setupScene3();
+
+    setupImagScene();
+    setupVideoScene();
 
     currentScene = sceneSplat1;
     currentCamera = cameraSplat1;
@@ -191,6 +203,21 @@ function setupScene3() {
     };
 }
 
+
+function setupImagScene() {
+    // Create a new scene for the image
+    imageContainer.style.display = 'block';
+    myImage= new Image(100, 200);
+    myImage.src = "/images/pearl.jpg";
+    imageContainer.appendChild(myImage);
+}
+
+function setupVideoScene() {
+    // Create a new scene for the video
+    videoContainer.style.display = 'block';
+    
+}
+
 function setup3DText() {
     // Scene for the 3D text
     scene3DText = new THREE.Scene();
@@ -327,6 +354,22 @@ function changeScene(scene, camera, startPosition, description) {
     camera.position.set(startPosition.x, startPosition.y, startPosition.z);
     orbitControls.object = currentCamera;
     document.getElementById('splat-text').innerText = description;
+}
+
+function changeContent(sequence) {
+    currentIndex = (currentIndex + 1) % sequence.length;
+    const currentContent = sequence[currentIndex];
+    if (currentContent.type === 'image') {
+        imageContainer.style.display = 'block';
+        videoContainer.style.display = 'none';
+        myImage.src = currentContent.src;
+    } else if (currentContent.type === 'video') {
+        imageContainer.style.display = 'none';
+        videoContainer.style.display = 'block';
+        myVideo.src = currentContent.src;
+    } else if (currentContent.type === 'splat') {
+        changeScene(currentContent.scene, currentContent.camera, currentContent.startPosition, currentContent.description);
+    }
 }
 
 // Animation loop
