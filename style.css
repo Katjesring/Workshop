@@ -14,6 +14,11 @@ body {
     color: white;
     text-align: center;
     z-index: 10;
+    background: rgba(0, 0, 0, 0.5); /* halbtransparenter Kasten */
+    padding: 16px 32px;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
 
 #splat-container {
@@ -23,12 +28,30 @@ body {
 
 #image-container {
     position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    background: transparent;
 }
 
 #video-container {
     position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    background: transparent;
 }
 
 
@@ -66,4 +89,3 @@ body {
     background-color: black;
 }
 
-    

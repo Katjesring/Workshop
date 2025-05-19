@@ -18,7 +18,7 @@ let sceneSplat1, sceneSplat2, sceneSplat3;
 let cameraSplat1, cameraSplat2, cameraSplat3;
 let startPositions = [new THREE.Vector3(0, 10, 25), new THREE.Vector3(-1.5, 0, -10)];
 
-let description = ["Splat 1: Beschreibung", "Splat 2: In Zukunft würde ich gerne Reisen und die Welt erkunden.", "Splat 3: Noch eine Beschreibung"];
+let description = ["Wer bin ich heute? Wer will ich sein?", "Wo fühlst du dich am wohlsten und warum?", "Welche träume hast du heute?"];
 
 let splat1, splat2, splat3;
 
@@ -203,17 +203,18 @@ function setupScene3() {
 
 
 function setupImageScene() {
-    // Create a new scene for the image
-    imageContainer.style.display = 'block';
-    myImage= new Image(100, 200);
-    myImage.src = "/images/pearl.jpg";
+    imageContainer.style.display = 'none';
+    myImage = new Image();
+    myImage.style.display = 'none';
     imageContainer.appendChild(myImage);
 }
 
 function setupVideoScene() {
-    // Create a new scene for the video
-    videoContainer.style.display = 'block';
-    
+    videoContainer.style.display = 'none';
+    myVideo = document.createElement('video');
+    myVideo.controls = true;
+    myVideo.style.display = 'none';
+    videoContainer.appendChild(myVideo);
 }
 
 function setup3DText() {
@@ -262,10 +263,11 @@ function setupHDR() {
 
 // Reihenfolge des gezeigten Contents festlegen (nachdem alles initialisiert wurde)
 let sequence = [
-    { type: 'image', src: '/images/pearl.jpg', description: 'Bild: Pearl' },
     { type: 'splat', scene: sceneSplat1, camera: cameraSplat1, startPosition: startPositions[0], description: description[0] },
     { type: 'splat', scene: sceneSplat2, camera: cameraSplat2, startPosition: startPositions[1], description: description[1] },
-    { type: 'splat', scene: sceneSplat3, camera: cameraSplat3, startPosition: startPositions[1], description: description[2] }
+    { type: 'splat', scene: sceneSplat3, camera: cameraSplat3, startPosition: startPositions[1], description: description[2] },
+    { type: 'image', src: '/images/pearl.jpg', description: 'Das Mädchen mit dem Perlenohrring', width: 600, height: 800 },
+    { type: 'video', src: '/videos/C0018.mp4', description: 'This is a Video', width: 1000, height: 800 },
 ];
 let currentIndex = 0;
 
@@ -331,20 +333,44 @@ function showCurrentContent() {
     if (myImage) myImage.style.display = 'none';
     videoContainer.style.display = 'none';
     if (myVideo) myVideo.style.display = 'none';
+    // 3D-Objekt-Container
+    let glbContainer = document.getElementById('glb-container');
+    if (glbContainer) glbContainer.style.display = 'none';
+    // Text-Container
+    let textContainer = document.getElementById('text-container');
+    if (textContainer) textContainer.style.display = 'none';
+    // Audio-Element
+    let audioElem = document.getElementById('audio-player');
+    if (audioElem) {
+        audioElem.pause();
+        audioElem.style.display = 'none';
+    }
 
     const item = sequence[currentIndex];
     if (item.type === 'splat') {
         renderer.domElement.style.display = 'block';
         changeScene(item.scene, item.camera, item.startPosition, item.description);
     } else if (item.type === 'image') {
-        imageContainer.style.display = 'block';
+        imageContainer.style.display = 'flex';
         if (myImage) {
             myImage.src = item.src;
             myImage.style.display = 'block';
+            if (item.width) myImage.width = item.width;
+            if (item.height) myImage.height = item.height;
         }
         document.getElementById('splat-text').innerText = item.description || "Bild";
+    } else if (item.type === 'video') {
+        videoContainer.style.display = 'flex';
+        if (myVideo) {
+            myVideo.src = item.src;
+            myVideo.style.display = 'block';
+            if (item.width) myVideo.width = item.width;
+            if (item.height) myVideo.height = item.height;
+            myVideo.load();
+        }
+        document.getElementById('splat-text').innerText = item.description || "Video";
     }
-    // Video analog falls benötigt
+    // ...existing code for 3dObject, text, audio...
 }
 
 
