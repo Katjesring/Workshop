@@ -154,7 +154,7 @@ function setupScene3() {
     cameraSplat3.position.set(startPositions[1].x, startPositions[1].y, startPositions[1].z);
 
     splat3 = new LumaSplatsThree({
-        source: 'https://lumalabs.ai/capture/aa1a06b9-d6f0-4b44-8a98-f1d11ed6dd04',
+        source: 'https://lumalabs.ai/capture/faa88f85-e4f6-4ff9-841d-d607a7d59cdc',
         enableThreeShaderIntegration: true,
         particleRevealEnabled: false,
     });
@@ -272,7 +272,8 @@ let sequence = [
     { type: 'splat', scene: sceneSplat3, camera: cameraSplat3, startPosition: startPositions[1], description: description[2] },
     { type: 'image', src: '/images/pearl.jpg', description: 'Das Mädchen mit dem Perlenohrring'},
     // { type: 'image', src: '/images/pearl.jpg', description: 'Das Mädchen mit dem Perlenohrring', width: 600, height: 800}
-    { type: 'video', src: '/videos/C0019.mp4', description: 'This is a Video'},
+    { type: 'image', src: '/images/mushroom.jpg', description: 'Waldpilz'},
+    { type: 'video', src: '/videos/20.mp4', description: 'This is a Video'},
     //{ type: 'video', src: '/videos/C0019.mp4', description: 'This is a Video' , width: 1000, height: 800}
 ];
 let currentIndex = 0;
