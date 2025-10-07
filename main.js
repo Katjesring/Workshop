@@ -270,10 +270,10 @@ let sequence = [
     { type: 'splat', scene: sceneSplat1, camera: cameraSplat1, startPosition: startPositions[0], description: description[0] },
     { type: 'splat', scene: sceneSplat2, camera: cameraSplat2, startPosition: startPositions[1], description: description[1] },
     { type: 'splat', scene: sceneSplat3, camera: cameraSplat3, startPosition: startPositions[1], description: description[2] },
-    { type: 'image', src: '/images/pearl.jpg', description: 'Das Mädchen mit dem Perlenohrring'},
+    { type: 'image', src: '/images/pearl.jpg', description: 'Was inspiriert dich?'},
     // { type: 'image', src: '/images/pearl.jpg', description: 'Das Mädchen mit dem Perlenohrring', width: 600, height: 800}
-    { type: 'image', src: '/images/mushroom.jpg', description: 'Waldpilz'},
-    { type: 'video', src: '/videos/20.mp4', description: 'This is a Video'},
+    { type: 'image', src: '/images/mushroom.jpg', description: 'Welche Materialien findest du spannend?'},
+    { type: 'video', src: '/videos/20.mp4', description: 'Wie möchtest du in Zukunft wohnen und arbeiten?'},
     //{ type: 'video', src: '/videos/C0019.mp4', description: 'This is a Video' , width: 1000, height: 800}
 ];
 let currentIndex = 0;
