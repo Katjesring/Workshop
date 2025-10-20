@@ -1,12 +1,14 @@
 import * as THREE from 'three';
-import { Uniform } from "three";
-import { LumaSplatsSemantics, LumaSplatsThree } from "@lumaai/luma-web";
-import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { OrbitControls } from 'https://unpkg.com/three@0.161.0/examples/jsm/controls/OrbitControls.js';
+import { Uniform } from "three"; // three.js Uniform wrapper for shader uniforms
+import { LumaSplatsSemantics, LumaSplatsThree } from "@lumaai/luma-web"; // LumaAI splats integration
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js'; // HDR environment map loader
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'; // GLTF model loader
+import { OrbitControls } from 'https://unpkg.com/three@0.161.0/examples/jsm/controls/OrbitControls.js'; // camera controls
 
 let renderer, renderer3DText, orbitControls, orbitControls3DText;
+// references to the currently displayed scene & camera
 let currentScene, currentCamera;
+// shader uniform bounds used to cull splats in LumaSplatThree's custom shader hook
 let xpositive = new Uniform(10);
 let ypositive = new Uniform(10);
 let zpositive = new Uniform(10);
@@ -14,21 +16,27 @@ let xnegative = new Uniform(-10);
 let ynegative = new Uniform(-10);
 let znegative = new Uniform(-10);
 
+// Scenes for Luma Splat content
 let sceneSplat1, sceneSplat2, sceneSplat3;
 let cameraSplat1, cameraSplat2, cameraSplat3;
+// predefined camera start positions used when switching scenes
 let startPositions = [new THREE.Vector3(0, 10, 25), new THREE.Vector3(-1.5, 0, -10)];
 
+// UI/descriptive text shown for each sequence item
 let description = ["Wer bin ich heute? Wer will ich sein?", "Wo fühlst du dich am wohlsten und warum?", "Welche träume hast du heute?"];
 
+// Luma splats objects 
 let splat1, splat2, splat3;
 
-//3D Text animation
+// 3D text / title model and its scene/camera
 let titleMesh, scene3DText, camera3DText;
 
-let hoverDirection = 10;
-let hoverSpeed = 0.05;  // Hover speed
-let hoverHeight = 20;  // Maximum hover height
+//parameters for the title hover animation
+let hoverDirection = 10; // direction multiplier applied to x position each frame
+let hoverSpeed = 0.05;  // Hover speed (delta per frame scaled by hoverDirection)
+let hoverHeight = 20;  // Maximum hover amplitude from the center
 
+// DOM containers for non-splat content
 let imageContainer = document.getElementById('image-container');
 let videoContainer = document.getElementById('video-container');
 let myImage;
@@ -36,6 +44,7 @@ let myVideo;
 
 
 
+// initialize everything and start the render loop
 init();
 renderer.setAnimationLoop(animate);
 
@@ -59,7 +68,7 @@ function init() {
 
     orbitControls = new OrbitControls(currentCamera, renderer.domElement);
     orbitControls.enableDamping = true;
-    
+
 
     setup3DText();
 
@@ -83,7 +92,7 @@ function setupScene1() {
         source: 'https://lumalabs.ai/capture/0c19c097-5d06-4fb4-a398-f0433a09d7ff',
         enableThreeShaderIntegration: true,
         particleRevealEnabled: false,
-        
+
     });
     //splat1.semanticsMask = LumaSplatsSemantics.FOREGROUND;
     splat1.position.set(0, 0, 0);
@@ -92,8 +101,8 @@ function setupScene1() {
         sceneSplat1.add(splat1);
     };
 
-    
-    
+
+
 }
 
 // Initialize splat2
@@ -107,7 +116,7 @@ function setupScene2() {
         source: 'https://lumalabs.ai/capture/816bcf27-682f-4e48-976d-e452e9ed5df8',
         enableThreeShaderIntegration: true,
         particleRevealEnabled: false,
-        semanticsMask: LumaSplatsSemantics.FOREGROUND
+        //semanticsMask: LumaSplatsSemantics.FOREGROUND
     });
     splat2.position.set(0, 0, 0);
     splat2.scale.set(3, 3, 3);  // Set scale to a visible size
@@ -160,7 +169,8 @@ function setupScene3() {
     });
     splat3.position.set(0, 0, 0);
     splat3.scale.set(3, 3, 3);  // Set scale to a visible size
-    
+
+    // Custom shader hook to cull splats based on dynamic bounds
     splat3.setShaderHooks({
         vertexShaderHooks: {
             additionalUniforms: {
@@ -194,7 +204,7 @@ function setupScene3() {
             }
         `,
         }
-    }); 
+    });
 
     splat3.onLoad = () => {
         sceneSplat3.add(splat3);
@@ -203,6 +213,7 @@ function setupScene3() {
 
 
 function setupImageScene() {
+    // prepare an <img> element to show images in the UI
     imageContainer.style.display = 'none';
     myImage = new Image();
     myImage.style.display = 'none';
@@ -212,6 +223,7 @@ function setupImageScene() {
 }
 
 function setupVideoScene() {
+    // prepare a <video> element for video sequence items
     videoContainer.style.display = 'none';
     myVideo = document.createElement('video');
     myVideo.controls = true;
@@ -224,7 +236,7 @@ function setupVideoScene() {
 function setup3DText() {
     // Scene for the 3D text
     scene3DText = new THREE.Scene();
-    camera3DText = new THREE.OrthographicCamera( 960 / - 2, 960 / 2, 150 / 2, 150 / - 2, 0.001, 1000 );
+    camera3DText = new THREE.OrthographicCamera(960 / - 2, 960 / 2, 150 / 2, 150 / - 2, 0.001, 1000);
     camera3DText.lookAt(new THREE.Vector3(0, 0, 0));
     scene3DText.add(new THREE.AmbientLight(0xffffff, 60));
     renderer3DText = new THREE.WebGLRenderer({
@@ -270,59 +282,61 @@ let sequence = [
     { type: 'splat', scene: sceneSplat1, camera: cameraSplat1, startPosition: startPositions[0], description: description[0] },
     { type: 'splat', scene: sceneSplat2, camera: cameraSplat2, startPosition: startPositions[1], description: description[1] },
     { type: 'splat', scene: sceneSplat3, camera: cameraSplat3, startPosition: startPositions[1], description: description[2] },
-    { type: 'image', src: '/images/pearl.jpg', description: 'Was inspiriert dich?'},
+    { type: 'image', src: '/images/pearl.jpg', description: 'Was inspiriert dich?' },
     // { type: 'image', src: '/images/pearl.jpg', description: 'Das Mädchen mit dem Perlenohrring', width: 600, height: 800}
-    { type: 'image', src: '/images/mushroom.jpg', description: 'Welche Materialien findest du spannend?'},
-    { type: 'video', src: '/videos/20.mp4', description: 'Wie möchtest du in Zukunft wohnen und arbeiten?'},
+    { type: 'image', src: '/images/mushroom.jpg', description: 'Welche Materialien findest du spannend?' },
+    { type: 'video', src: '/videos/20.mp4', description: 'Wie möchtest du in Zukunft wohnen und arbeiten?' },
     //{ type: 'video', src: '/videos/C0019.mp4', description: 'This is a Video' , width: 1000, height: 800}
 ];
+
+// Aktueller Index im Content-Sequenz-Array
 let currentIndex = 0;
 
 
 
 function setupInput() {
     // Event listeners for keyboard and click-based navigation
-   document.addEventListener('DOMContentLoaded', () => {
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'ArrowRight') {
-            currentIndex = (currentIndex + 1) % sequence.length;
-            showCurrentContent();
-        }
-        if (event.key === 'ArrowLeft') {
+    document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowRight') {
+                currentIndex = (currentIndex + 1) % sequence.length;
+                showCurrentContent();
+            }
+            if (event.key === 'ArrowLeft') {
+                currentIndex = (currentIndex - 1 + sequence.length) % sequence.length;
+                showCurrentContent();
+            }
+            if (event.key === 'x') {
+                console.log('ArrowLeft pressed');
+                xpositive.value = xpositive.value - 0.1;
+            }
+            if (event.key === 'y') {
+                ypositive.value = ypositive.value - 0.1;
+            }
+            if (event.key === 'z') {
+                zpositive.value = zpositive.value - 0.1;
+            }
+            if (event.key === 'a') {
+                xnegative.value = xnegative.value + 0.1;
+            }
+            if (event.key === 'b') {
+                ynegative.value = ynegative.value + 0.1;
+            }
+            if (event.key === 'c') {
+                znegative.value = znegative.value + 0.1;
+            }
+        });
+
+        // Event listeners for mouse navigation
+        document.getElementById('arrow-left').addEventListener('click', () => {
             currentIndex = (currentIndex - 1 + sequence.length) % sequence.length;
             showCurrentContent();
-        }
-        if (event.key === 'x') {
-            console.log('ArrowLeft pressed');
-            xpositive.value = xpositive.value - 0.1;
-        }
-        if (event.key === 'y') {
-            ypositive.value = ypositive.value - 0.1;
-        }
-        if (event.key === 'z') {
-            zpositive.value = zpositive.value - 0.1;
-        }
-        if (event.key === 'a') {
-            xnegative.value = xnegative.value + 0.1;
-        }
-        if (event.key === 'b') {
-            ynegative.value = ynegative.value + 0.1;
-        }
-        if (event.key === 'c') {
-            znegative.value = znegative.value + 0.1;
-        }
+        });
+        document.getElementById('arrow-right').addEventListener('click', () => {
+            currentIndex = (currentIndex + 1) % sequence.length;
+            showCurrentContent();
+        });
     });
-
-    // Event listeners for mouse navigation
-    document.getElementById('arrow-left').addEventListener('click', () => {
-        currentIndex = (currentIndex - 1 + sequence.length) % sequence.length;
-        showCurrentContent();
-    });
-    document.getElementById('arrow-right').addEventListener('click', () => {
-        currentIndex = (currentIndex + 1) % sequence.length;
-        showCurrentContent();
-    });
-});
 }
 
 function changeScene(scene, camera, startPosition, description) {
@@ -391,18 +405,16 @@ function showCurrentContent() {
 
 
 
-// Animation loop
+// Animation loop per frame
 function animate() {
     orbitControls.update();
-    if(splat1 != null)
-        {
-            splat1.skybox.visible = false;
-        }
-        
-        if(splat3 != null)
-            {
-                splat3.skybox.visible = false;
-            } 
+    if (splat1 != null) {
+        splat1.skybox.visible = false;
+    }
+
+    if (splat3 != null) {
+        splat3.skybox.visible = false;
+    }
     // Hovering animation for the title
     if (titleMesh) {
         titleMesh.position.x += hoverDirection * hoverSpeed;
