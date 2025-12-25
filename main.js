@@ -16,17 +16,12 @@ let xnegative = new Uniform(-10);
 let ynegative = new Uniform(-10);
 let znegative = new Uniform(-10);
 
-// Scenes for Luma Splat content
-let sceneSplat1, sceneSplat2, sceneSplat3;
-let cameraSplat1, cameraSplat2, cameraSplat3;
-// predefined camera start positions used when switching scenes
-let startPositions = [new THREE.Vector3(0, 10, 25), new THREE.Vector3(-1.5, 0, -10)];
-
-// UI/descriptive text shown for each sequence item
-let description = ["Wer bin ich heute? Wer will ich sein?", "Wo fühlst du dich am wohlsten und warum?", "Welche träume hast du heute?"];
+// Scenes and cameras for Luma Splat content
+let scenes = [];
+let cameras = [];
 
 // Luma splats objects 
-let splat1, splat2, splat3;
+let splats = [];
 
 // 3D text / title model and its scene/camera
 let titleMesh, scene3DText, camera3DText;
@@ -42,6 +37,42 @@ let videoContainer = document.getElementById('video-container');
 let myImage;
 let myVideo;
 
+// Reihenfolge des gezeigten Contents festlegen (nachdem alles initialisiert wurde)
+let sequence = [
+    {
+        type: 'splat',
+        src: 'https://lumalabs.ai/capture/0c19c097-5d06-4fb4-a398-f0433a09d7ff',
+        startPosition: new THREE.Vector3(0, 10, 25),
+        bounds: null,
+        customSkybox: '/hdr/misty_pines_2k.hdr',
+        description: 'Wer bin ich heute? Wer will ich sein?'
+    },
+    {
+        type: 'splat',
+        src: 'https://lumalabs.ai/capture/816bcf27-682f-4e48-976d-e452e9ed5df8',
+        startPosition: new THREE.Vector3(-1.5, 0, -10),
+        bounds: null,
+        customSkybox: null,
+        description: 'Wo fühlst du dich am wohlsten und warum?'
+    },
+    {
+        type: 'splat',
+        src: 'https://lumalabs.ai/capture/faa88f85-e4f6-4ff9-841d-d607a7d59cdc',
+        startPosition: new THREE.Vector3(-1.5, 0, -10),
+        bounds: { xpos: new Uniform(10), ypos: new Uniform(10), zpos: new Uniform(10), xneg: new Uniform(-10), yneg: new Uniform(-10), zneg: new Uniform(-10) },
+        customSkybox: '/hdr/misty_pines_2k.hdr',
+        description: 'Welche träume hast du heute?'
+    },
+    { type: 'image', src: '/images/pearl.jpg', description: 'Was inspiriert dich?' },
+    // { type: 'image', src: '/images/pearl.jpg', description: 'Das Mädchen mit dem Perlenohrring', width: 600, height: 800}
+    { type: 'image', src: '/images/mushroom.jpg', description: 'Welche Materialien findest du spannend?' },
+    { type: 'video', src: '/videos/20.mp4', description: 'Wie möchtest du in Zukunft wohnen und arbeiten?' },
+    //{ type: 'video', src: '/videos/C0019.mp4', description: 'This is a Video' , width: 1000, height: 800}
+];
+
+// Aktueller Index im Content-Sequenz-Array
+let currentIndex = 0;
+
 
 
 // initialize everything and start the render loop
@@ -55,16 +86,20 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.getElementById('splat-container').appendChild(renderer.domElement);
 
-    setupScene1();
-    setupScene2();
-    setupScene3();
+    sequence.forEach((element, index) => {
+        if (element.type == 'splat') {
+            setupSplatScene(index);
+            if(index == 0){
+                currentScene = element.scene;
+                currentCamera = element.camera;
+            }
+        }
+    });
 
     setupImageScene();
     setupVideoScene();
 
-    currentScene = sceneSplat1;
-    currentCamera = cameraSplat1;
-    document.getElementById('splat-text').innerText = description[0];
+    document.getElementById('splat-text').innerText = sequence[0].description;
 
     orbitControls = new OrbitControls(currentCamera, renderer.domElement);
     orbitControls.enableDamping = true;
@@ -75,114 +110,40 @@ function init() {
     orbitControls3DText = new OrbitControls(camera3DText, renderer3DText.domElement);
     orbitControls3DText.enableDamping = true;
 
-    setupHDR();
-
     setupInput();
 
 }
 
-// Initialize splat1 before adding it to the scene
-function setupScene1() {
-    sceneSplat1 = new THREE.Scene();
+// Initialize splat scene from sequence
+function setupSplatScene(seqIndex) {
+    let newScene = new THREE.Scene();
+    let newCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+    newCamera.position.set(sequence[seqIndex].startPosition.x, sequence[seqIndex].startPosition.y, sequence[seqIndex].startPosition.z);
 
-    cameraSplat1 = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    cameraSplat1.position.set(startPositions[0].x, startPositions[0].y, startPositions[0].z);
-
-    splat1 = new LumaSplatsThree({
-        source: 'https://lumalabs.ai/capture/0c19c097-5d06-4fb4-a398-f0433a09d7ff',
+    let newSplat = new LumaSplatsThree({
+        source: sequence[seqIndex].src,
         enableThreeShaderIntegration: true,
         particleRevealEnabled: false,
 
     });
-    //splat1.semanticsMask = LumaSplatsSemantics.FOREGROUND;
-    splat1.position.set(0, 0, 0);
-    splat1.scale.set(3, 3, 3);  // Set scale to a visible size
-    splat1.onLoad = () => {
-        sceneSplat1.add(splat1);
-    };
+    newSplat.position.set(0, 0, 0);
+    newSplat.scale.set(3, 3, 3);  // Set scale to a visible size
 
+    // Check if bounds have been added
+    if (sequence[seqIndex].bounds != null) {
+        // Custom shader hook to cull splats based on dynamic bounds
+        newSplat.setShaderHooks({
+            vertexShaderHooks: {
+                additionalUniforms: {
+                    xPos: ['float', sequence[seqIndex].bounds.xpos],
+                    yPos: ['float', sequence[seqIndex].bounds.ypos],
+                    zPos: ['float', sequence[seqIndex].bounds.zpos],
+                    xNeg: ['float', sequence[seqIndex].bounds.xneg],
+                    yNeg: ['float', sequence[seqIndex].bounds.yneg],
+                    zNeg: ['float', sequence[seqIndex].bounds.zneg],
+                },
 
-
-}
-
-// Initialize splat2
-function setupScene2() {
-    sceneSplat2 = new THREE.Scene();
-
-    cameraSplat2 = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
-    cameraSplat2.position.set(startPositions[1].x, startPositions[1].y, startPositions[1].z);
-
-    splat2 = new LumaSplatsThree({
-        source: 'https://lumalabs.ai/capture/816bcf27-682f-4e48-976d-e452e9ed5df8',
-        enableThreeShaderIntegration: true,
-        particleRevealEnabled: false,
-        //semanticsMask: LumaSplatsSemantics.FOREGROUND
-    });
-    splat2.position.set(0, 0, 0);
-    splat2.scale.set(3, 3, 3);  // Set scale to a visible size
-    /*
-    splat2.setShaderHooks({
-        vertexShaderHooks: {
-            additionalUniforms: {
-            },
-
-            getSplatTransform: `
-            (vec3 position, uint layersBitmask) {
-                float x = 1.;
-                float z = 1.;
-                float y = 1.;
-                if(position.x > 2.8 || position.x < -2.8
-                || position.y > 0.5 || position.y < -2.0
-                || position.z > 2.1 || position.z < -2.5)
-                {
-                    x = 0.0;
-                    y = 0.0;
-                    z = 0.0;
-                }
-                return mat4(
-                    x, 0., 0., 0,
-                    0., y, 0., 0,
-                    0., 0., z, 0,
-                    1., 1., 1., 1.
-                );
-            }
-        `,
-        }
-    }); 
-    */
-    splat2.onLoad = () => {
-        sceneSplat2.add(splat2);
-    };
-}
-
-// Initialize splat3
-function setupScene3() {
-    sceneSplat3 = new THREE.Scene();
-
-    cameraSplat3 = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
-    cameraSplat3.position.set(startPositions[1].x, startPositions[1].y, startPositions[1].z);
-
-    splat3 = new LumaSplatsThree({
-        source: 'https://lumalabs.ai/capture/faa88f85-e4f6-4ff9-841d-d607a7d59cdc',
-        enableThreeShaderIntegration: true,
-        particleRevealEnabled: false,
-    });
-    splat3.position.set(0, 0, 0);
-    splat3.scale.set(3, 3, 3);  // Set scale to a visible size
-
-    // Custom shader hook to cull splats based on dynamic bounds
-    splat3.setShaderHooks({
-        vertexShaderHooks: {
-            additionalUniforms: {
-                xPos: ['float', xpositive],
-                yPos: ['float', ypositive],
-                zPos: ['float', zpositive],
-                xNeg: ['float', xnegative],
-                yNeg: ['float', ynegative],
-                zNeg: ['float', znegative],
-            },
-
-            getSplatTransform: `
+                getSplatTransform: `
             (vec3 position, uint layersBitmask) {
                 float x = 1.;
                 float z = 1.;
@@ -203,14 +164,26 @@ function setupScene3() {
                 );
             }
         `,
-        }
-    });
+            }
+        });
+    }
 
-    splat3.onLoad = () => {
-        sceneSplat3.add(splat3);
+    newSplat.onLoad = () => {
+        newScene.add(newSplat);
     };
-}
 
+    if (sequence[seqIndex].customSkybox != null) {
+        const hdrLoader = new RGBELoader();
+        hdrLoader.loadAsync(sequence[seqIndex].customSkybox).then(hdrTexture => {
+            hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
+            newScene.background = hdrTexture;
+        });
+    }
+
+    sequence[seqIndex].scene = newScene;
+    sequence[seqIndex].camera = newCamera;
+    sequence[seqIndex].splat = newSplat;
+}
 
 function setupImageScene() {
     // prepare an <img> element to show images in the UI
@@ -254,44 +227,13 @@ function setup3DText() {
         titleMesh.position.set(0, 0, 0);  // Position the model
         scene3DText.add(titleMesh);
     });
-
-
-}
-
-
-
-function setupHDR() {
     const hdrLoader = new RGBELoader();
     hdrLoader.loadAsync('/hdr/misty_pines_2k.hdr').then(hdrTexture => {
         hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
-        sceneSplat1.background = hdrTexture;
         scene3DText.environment = hdrTexture;
     });
-    hdrLoader.loadAsync('/hdr/misty_pines_2k.hdr').then(hdrTexture => {
-        hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
-        sceneSplat2.background = hdrTexture;
-    });
-    hdrLoader.loadAsync('/hdr/misty_pines_2k.hdr').then(hdrTexture => {
-        hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
-        sceneSplat3.background = hdrTexture;
-    });
+
 }
-
-// Reihenfolge des gezeigten Contents festlegen (nachdem alles initialisiert wurde)
-let sequence = [
-    { type: 'splat', scene: sceneSplat1, camera: cameraSplat1, startPosition: startPositions[0], description: description[0] },
-    { type: 'splat', scene: sceneSplat2, camera: cameraSplat2, startPosition: startPositions[1], description: description[1] },
-    { type: 'splat', scene: sceneSplat3, camera: cameraSplat3, startPosition: startPositions[1], description: description[2] },
-    { type: 'image', src: '/images/pearl.jpg', description: 'Was inspiriert dich?' },
-    // { type: 'image', src: '/images/pearl.jpg', description: 'Das Mädchen mit dem Perlenohrring', width: 600, height: 800}
-    { type: 'image', src: '/images/mushroom.jpg', description: 'Welche Materialien findest du spannend?' },
-    { type: 'video', src: '/videos/20.mp4', description: 'Wie möchtest du in Zukunft wohnen und arbeiten?' },
-    //{ type: 'video', src: '/videos/C0019.mp4', description: 'This is a Video' , width: 1000, height: 800}
-];
-
-// Aktueller Index im Content-Sequenz-Array
-let currentIndex = 0;
-
 
 
 function setupInput() {
@@ -408,13 +350,13 @@ function showCurrentContent() {
 // Animation loop per frame
 function animate() {
     orbitControls.update();
-    if (splat1 != null) {
-        splat1.skybox.visible = false;
+
+
+    if (sequence[currentIndex].customSkybox != null) {
+        // Deactivate splat skybox for the current frame to prevent it from covering up the hdr
+        sequence[currentIndex].splat.skybox.visible = false;
     }
 
-    if (splat3 != null) {
-        splat3.skybox.visible = false;
-    }
     // Hovering animation for the title
     if (titleMesh) {
         titleMesh.position.x += hoverDirection * hoverSpeed;
