@@ -45,7 +45,8 @@ let sequence = [
         startPosition: new THREE.Vector3(0, 10, 25),
         bounds: null,
         customSkybox: '/hdr/misty_pines_2k.hdr',
-        description: 'Wer bin ich heute? Wer will ich sein?'
+        description: 'Wer bin ich heute? Wer will ich sein?',
+        answer: ''
     },
     {
         type: 'splat',
@@ -53,7 +54,8 @@ let sequence = [
         startPosition: new THREE.Vector3(-1.5, 0, -10),
         bounds: null,
         customSkybox: null,
-        description: 'Wo fühlst du dich am wohlsten und warum?'
+        description: 'Wo fühlst du dich am wohlsten und warum?',
+        answer: ''
     },
     {
         type: 'splat',
@@ -61,12 +63,13 @@ let sequence = [
         startPosition: new THREE.Vector3(-1.5, 0, -10),
         bounds: { xpos: new Uniform(10), ypos: new Uniform(10), zpos: new Uniform(10), xneg: new Uniform(-10), yneg: new Uniform(-10), zneg: new Uniform(-10) },
         customSkybox: '/hdr/misty_pines_2k.hdr',
-        description: 'Welche träume hast du heute?'
+        description: 'Welche träume hast du heute?',
+        answer: ''
     },
-    { type: 'image', src: '/images/pearl.jpg', description: 'Was inspiriert dich?' },
+    { type: 'image', src: '/images/pearl.jpg', description: 'Was inspiriert dich?', answer: '' },
     // { type: 'image', src: '/images/pearl.jpg', description: 'Das Mädchen mit dem Perlenohrring', width: 600, height: 800}
-    { type: 'image', src: '/images/mushroom.jpg', description: 'Welche Materialien findest du spannend?' },
-    { type: 'video', src: '/videos/20.mp4', description: 'Wie möchtest du in Zukunft wohnen und arbeiten?' },
+    { type: 'image', src: '/images/mushroom.jpg', description: 'Welche Materialien findest du spannend?', answer: '' },
+    { type: 'video', src: '/videos/20.mp4', description: 'Wie möchtest du in Zukunft wohnen und arbeiten?', answer: '' },
     //{ type: 'video', src: '/videos/C0019.mp4', description: 'This is a Video' , width: 1000, height: 800}
 ];
 
@@ -278,7 +281,26 @@ function setupInput() {
             currentIndex = (currentIndex + 1) % sequence.length;
             showCurrentContent();
         });
+
+        // Click handler for description to toggle answer field
+        document.getElementById('splat-text').addEventListener('click', toggleAnswer);
+        document.getElementById('answer-text').addEventListener('click', toggleAnswer);
     });
+}
+
+function toggleAnswer() {
+    const answerElement = document.getElementById('answer-text');
+    const currentItem = sequence[currentIndex];
+    
+    // Check if answer field is visible
+    if (answerElement.classList.contains('visible')) {
+        // Hide the answer field
+        answerElement.classList.remove('visible');
+    } else {
+        // Show the answer field
+        answerElement.innerText = currentItem.answer || 'Keine Antwort vorhanden';
+        answerElement.classList.add('visible');
+    }
 }
 
 function changeScene(scene, camera, startPosition, description) {
@@ -287,6 +309,8 @@ function changeScene(scene, camera, startPosition, description) {
     camera.position.set(startPosition.x, startPosition.y, startPosition.z);
     orbitControls.object = currentCamera;
     document.getElementById('splat-text').innerText = description;
+    document.getElementById('answer-text').classList.remove('visible');
+    document.getElementById('answer-text').innerText = '';
 }
 
 // Funktion zum Anzeigen des aktuellen Contents
@@ -322,6 +346,8 @@ function showCurrentContent() {
             if (item.height) myImage.height = item.height;
         }
         document.getElementById('splat-text').innerText = item.description || "Bild";
+        document.getElementById('answer-text').classList.remove('visible');
+        document.getElementById('answer-text').innerText = '';
     } else if (item.type === 'video') {
         videoContainer.style.display = 'flex';
         if (myVideo) {
@@ -337,6 +363,8 @@ function showCurrentContent() {
             myVideo.play();
         }
         document.getElementById('splat-text').innerText = item.description || "Video";
+        document.getElementById('answer-text').classList.remove('visible');
+        document.getElementById('answer-text').innerText = '';
     }
     // ...existing code for 3dObject, text, audio...
 }
