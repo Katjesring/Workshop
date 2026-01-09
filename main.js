@@ -39,6 +39,7 @@ let audioContainer = document.getElementById('audio-container');
 let myImage;
 let myVideo;
 let myAudio;
+let currentAudioSrc = null;  // Track the currently playing audio
 
 // Reihenfolge des gezeigten Contents festlegen (nachdem alles initialisiert wurde)
 let sequence = [
@@ -50,7 +51,7 @@ let sequence = [
         customSkybox: '/hdr/misty_pines_2k.hdr',
         description: 'Wer bin ich heute? Wer will ich sein?',
         answer: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. ',
-        //audio: '/audio/ambient.mp3'
+        audio: '/audio/ambient.mp3'
     },
     {
         type: 'splat',
@@ -59,7 +60,8 @@ let sequence = [
         bounds: null,
         customSkybox: null,
         description: 'Wo fühlst du dich am wohlsten und warum?',
-        answer: ''
+        answer: '',
+        audio: '/audio/ambient.mp3'
     },
     {
         type: 'splat',
@@ -124,6 +126,15 @@ function init() {
 
     setupInput();
 
+    // Play audio for initial splat if it has one
+    if (sequence[0].audio && myAudio) {
+        myAudio.src = sequence[0].audio;
+        currentAudioSrc = sequence[0].audio;
+        myAudio.play();
+        // Show audio buttons
+        document.getElementById('audio-start').style.display = 'block';
+        document.getElementById('audio-stop').style.display = 'block';
+    }
 }
 
 // Initialize splat scene from sequence
@@ -383,6 +394,14 @@ function setupInput() {
         // Click handler for description to toggle answer field
         document.getElementById('splat-text').addEventListener('click', toggleAnswer);
         document.getElementById('answer-text').addEventListener('click', toggleAnswer);
+
+        // Audio control buttons
+        document.getElementById('audio-start').addEventListener('click', () => {
+            if (myAudio) myAudio.play();
+        });
+        document.getElementById('audio-stop').addEventListener('click', () => {
+            if (myAudio) myAudio.pause();
+        });
     });
 }
 
@@ -418,11 +437,16 @@ function showCurrentContent() {
     if (myImage) myImage.style.display = 'none';
     videoContainer.style.display = 'none';
     if (myVideo) myVideo.style.display = 'none';
-    // Stop audio from previous content
-    if (myAudio) {
-        myAudio.pause();
-        myAudio.currentTime = 0;
-        audioContainer.style.display = 'none';
+    
+    const item = sequence[currentIndex];
+    
+    // Stop audio only if the new item has different audio
+    if (item.audio !== currentAudioSrc) {
+        if (myAudio) {
+            myAudio.pause();
+            myAudio.currentTime = 0;
+            audioContainer.style.display = 'none';
+        }
     }
     // 3D-Objekt-Container
     let glbContainer = document.getElementById('glb-container');
@@ -437,7 +461,6 @@ function showCurrentContent() {
         audioElem.style.display = 'none';
     }
 
-    const item = sequence[currentIndex];
     if (item.type === 'splat') {
         renderer.domElement.style.display = 'block';
         changeScene(item.scene, item.camera, item.startPosition, item.description);
@@ -474,10 +497,21 @@ function showCurrentContent() {
     // Handle audio playback (can be added to any content type)
     if (item.audio) {
         audioContainer.style.display = 'block';
+        document.getElementById('audio-start').style.display = 'block';
+        document.getElementById('audio-stop').style.display = 'block';
         if (myAudio) {
-            myAudio.src = item.audio;
-            myAudio.play();
+            // Only load and play if it's a different audio file
+            if (item.audio !== currentAudioSrc) {
+                myAudio.src = item.audio;
+                currentAudioSrc = item.audio;
+                myAudio.play();
+            }
+            // If same audio, it keeps playing
         }
+    } else {
+        document.getElementById('audio-start').style.display = 'none';
+        document.getElementById('audio-stop').style.display = 'none';
+        currentAudioSrc = null;
     }
     // ...existing code for 3dObject, text, audio...
 }

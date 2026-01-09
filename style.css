@@ -141,3 +141,31 @@ body {
     background-color: black;
 }
 
+/* Audio control buttons */
+.audio-btn {
+    position: absolute;
+    bottom: 30px;
+    font-size: 16px;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.6);
+    border: 2px solid white;
+    padding: 10px 20px;
+    cursor: pointer;
+    z-index: 20;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+    display: none;
+}
+
+#audio-start {
+    left: 30px;
+}
+
+#audio-stop {
+    left: 150px;
+}
+
+.audio-btn:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
