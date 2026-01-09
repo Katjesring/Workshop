@@ -126,6 +126,7 @@ body {
     padding: 5px;
     cursor: pointer;
     z-index: 20;
+    transition: opacity 0.2s ease, transform 0.1s ease;
 }
 
 #arrow-left {
@@ -134,6 +135,15 @@ body {
 
 #arrow-right {
     right: 25px;
+}
+
+.arrow:hover {
+    opacity: 0.7;
+    transform: translateY(-50%) scale(1.15);
+}
+
+.arrow:active {
+    transform: translateY(-50%) scale(0.95);
 }
 
 /* Einfache Stile für den Hintergrund */
@@ -145,27 +155,43 @@ body {
 .audio-btn {
     position: absolute;
     bottom: 30px;
-    font-size: 16px;
+    font-size: 0;
     color: white;
-    background-color: rgba(0, 0, 0, 0.6);
-    border: 2px solid white;
-    padding: 10px 20px;
+    background-color: transparent;
+    border: none;
+    padding: 0;
     cursor: pointer;
     z-index: 20;
-    border-radius: 8px;
-    transition: background-color 0.2s ease;
+    transition: opacity 0.2s ease, transform 0.1s ease;
     display: none;
+    width: auto;
+    height: auto;
 }
 
 #audio-start {
     left: 30px;
 }
 
+#audio-start::before {
+    content: '▶';
+    font-size: 32px;
+}
+
 #audio-stop {
-    left: 150px;
+    left: 70px;
+}
+
+#audio-stop::before {
+    content: '⏸';
+    font-size: 32px;
 }
 
 .audio-btn:hover {
-    background-color: rgba(0, 0, 0, 0.8);
+    opacity: 0.7;
+    transform: scale(1.15);
+}
+
+.audio-btn:active {
+    transform: scale(0.95);
 }
 
