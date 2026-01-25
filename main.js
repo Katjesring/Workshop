@@ -1,11 +1,16 @@
-import * as THREE from 'three';
+import * as THREE from "three";
 import { Uniform } from "three"; // three.js Uniform wrapper for shader uniforms
 import { LumaSplatsSemantics, LumaSplatsThree } from "@lumaai/luma-web"; // LumaAI splats integration
-import { RGBELoader } from 'three/addons/loaders/RGBELoader.js'; // HDR environment map loader
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'; // GLTF model loader
-import { OrbitControls } from 'https://unpkg.com/three@0.161.0/examples/jsm/controls/OrbitControls.js'; // camera controls
+import { RGBELoader } from "three/addons/loaders/RGBELoader.js"; // HDR environment map loader
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js"; // GLTF model loader
+import { OrbitControls } from "https://unpkg.com/three@0.161.0/examples/jsm/controls/OrbitControls.js"; // camera controls
 
-let renderer, renderer3DText, orbitControls, orbitControls3DText, renderer3DArrow, orbitControls3DArrow;
+let renderer,
+  renderer3DText,
+  orbitControls,
+  orbitControls3DText,
+  renderer3DArrow,
+  orbitControls3DArrow;
 // references to the currently displayed scene & camera
 let currentScene, currentCamera;
 // shader uniform bounds used to cull splats in LumaSplatThree's custom shader hook
@@ -20,162 +25,209 @@ let znegative = new Uniform(-10);
 let scenes = [];
 let cameras = [];
 
-// Luma splats objects 
+// Luma splats objects
 let splats = [];
 
 // 3D text / title model and its scene/camera
 let titleMesh, scene3DText, camera3DText;
-let arrowMesh,scene3DArrow, camera3DArrow;
+let arrowMesh, scene3DArrow, camera3DArrow;
 
 //parameters for the title hover animation
 let hoverDirection = 10; // direction multiplier applied to x position each frame
-let hoverSpeed = 0.05;  // Hover speed (delta per frame scaled by hoverDirection)
-let hoverHeight = 20;  // Maximum hover amplitude from the center
+let hoverSpeed = 0.05; // Hover speed (delta per frame scaled by hoverDirection)
+let hoverHeight = 20; // Maximum hover amplitude from the center
 
 // DOM containers for non-splat content
-let imageContainer = document.getElementById('image-container');
-let videoContainer = document.getElementById('video-container');
-let audioContainer = document.getElementById('audio-container');
+let imageContainer = document.getElementById("image-container");
+let videoContainer = document.getElementById("video-container");
+let audioContainer = document.getElementById("audio-container");
+let glbContainer = document.getElementById("glb-container");
+
 let myImage;
 let myVideo;
 let myAudio;
-let currentAudioSrc = null;  // Track the currently playing audio
+let myGLB;
+
+let currentAudioSrc = null; // Track the currently playing audio
 
 // Reihenfolge des gezeigten Contents festlegen (nachdem alles initialisiert wurde)
 let sequence = [
-    {
-        type: 'splat',
-        src: 'https://lumalabs.ai/capture/0c19c097-5d06-4fb4-a398-f0433a09d7ff',
-        startPosition: new THREE.Vector3(-25, 10, 25),
-        bounds: null,
-        customSkybox: '/hdr/misty_pines_2k.hdr',
-        description: 'Wer bin ich heute? Wer will ich sein?',
-        answer: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.  ',
-        audio: '/audio/ambient.mp3'
-    },
-    {
-        type: 'splat',
-        src: 'https://lumalabs.ai/capture/816bcf27-682f-4e48-976d-e452e9ed5df8',
-        startPosition: new THREE.Vector3(-10, 0, -10),
-        bounds: null,
-        customSkybox: null,
-        description: 'Wo fühlst du dich am wohlsten und warum?',
-        answer: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy \neirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.  ',
-        audio: '/audio/ambient.mp3'
-    },
-    {
-        type: 'splat',
-        src: 'https://lumalabs.ai/capture/faa88f85-e4f6-4ff9-841d-d607a7d59cdc',
-        startPosition: new THREE.Vector3(10, 0, 0),
-        //'q' / 'w': 'e' / 'r' ,'t' / 'y'
-        rotation: { x: -0.10, y: 0.10, z: 0.20 },
-        //bounds: { xpos: new Uniform(10), ypos: new Uniform(10), zpos: new Uniform(10), xneg: new Uniform(-10), yneg: new Uniform(-10), zneg: new Uniform(-10) },
-        customSkybox: '/hdr/misty_pines_2k.hdr',
-        description: 'Welche träume hast du heute?',
-        answer: ''
-    },
-    { type: 'image', src: '/images/pearl.jpg', description: 'Was inspiriert dich?', answer: '' },
-    { type: 'image', src: '/images/mushroom.jpg', description: 'Welche Materialien findest du spannend?', answer: '' },
-    { type: 'video', src: '/videos/20.mp4', description: 'Wie möchtest du in Zukunft wohnen und arbeiten?', answer: '' },
+  {
+    type: "splat",
+    src: "https://lumalabs.ai/capture/0c19c097-5d06-4fb4-a398-f0433a09d7ff",
+    startPosition: new THREE.Vector3(-25, 10, 25),
+    bounds: null,
+    customSkybox: "/hdr/misty_pines_2k.hdr",
+    description: "Wer bin ich heute? Wer will ich sein?",
+    answer:
+      "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.  ",
+    audio: "/audio/ambient.mp3",
+  },
+  {
+    type: "splat",
+    src: "https://lumalabs.ai/capture/816bcf27-682f-4e48-976d-e452e9ed5df8",
+    startPosition: new THREE.Vector3(-10, 0, -10),
+    bounds: null,
+    customSkybox: null,
+    description: "Wo fühlst du dich am wohlsten und warum?",
+    answer:
+      "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy \neirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.  ",
+    audio: "/audio/ambient.mp3",
+  },
+  {
+    type: "splat",
+    src: "https://lumalabs.ai/capture/faa88f85-e4f6-4ff9-841d-d607a7d59cdc",
+    startPosition: new THREE.Vector3(10, 0, 0),
+    //'q' / 'w': 'e' / 'r' ,'t' / 'y'
+    rotation: { x: -0.1, y: 0.1, z: 0.2 },
+    //bounds: { xpos: new Uniform(10), ypos: new Uniform(10), zpos: new Uniform(10), xneg: new Uniform(-10), yneg: new Uniform(-10), zneg: new Uniform(-10) },
+    customSkybox: "/hdr/misty_pines_2k.hdr",
+    description: "Welche träume hast du heute?",
+    answer: "",
+  },
+  {
+    type: "image",
+    src: "/images/pearl.jpg",
+    description: "Was inspiriert dich?",
+    answer: "",
+  },
+  {
+    type: "image",
+    src: "/images/mushroom.jpg",
+    description: "Welche Materialien findest du spannend?",
+    answer: "",
+  },
+  {
+    type: "video",
+    src: "/videos/20.mp4",
+    description: "Wie möchtest du in Zukunft wohnen und arbeiten?",
+    answer: "",
+  },
+  {
+    type: "glb",
+    src: "/mesh/cat.glb",
+    description: "Wie möchtest du in Zukunft wohnen und arbeiten?",
+    answer: "",
+    startPosition: new THREE.Vector3(0, 0, 2),
+    scale: new THREE.Vector3(10, 10, 10),
+    position: new THREE.Vector3(0, 0, 0),
+    customSkybox: "/hdr/misty_pines_2k.hdr"
+  },
 ];
 
 // Aktueller Index im Content-Sequenz-Array
 let currentIndex = 0;
-
-
 
 // initialize everything and start the render loop
 init();
 renderer.setAnimationLoop(animate);
 
 function init() {
+  //setup renderer
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.getElementById("render-container").appendChild(renderer.domElement);
 
-    //setup renderer
-    renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.getElementById('splat-container').appendChild(renderer.domElement);
-
-    sequence.forEach((element, index) => {
-        if (element.type == 'splat') {
-            setupSplatScene(index);
-            if(index == 0){
-                currentScene = element.scene;
-                currentCamera = element.camera;
-            }
-        }
-    });
-
-    setupImageScene();
-    setupVideoScene();
-    setupAudioScene();
-
-    document.getElementById('splat-text').innerText = sequence[0].description;
-
-    orbitControls = new OrbitControls(currentCamera, renderer.domElement);
-    orbitControls.enableDamping = true;
-
-
-    setup3DText();
-    setup3DArrows();
-
-    orbitControls3DText = new OrbitControls(camera3DText, renderer3DText.domElement);
-    orbitControls3DText.enableDamping = true;
-
-    orbitControls3DArrow = new OrbitControls(camera3DArrow, renderer3DArrow.domElement);
-    orbitControls3DArrow.enableDamping = true;
-
-    setupInput();
-
-    // Play audio for initial splat if it has one
-    if (sequence[0].audio && myAudio) {
-        myAudio.src = sequence[0].audio;
-        currentAudioSrc = sequence[0].audio;
-        myAudio.play();
-        // Show audio buttons
-        document.getElementById('audio-start').style.display = 'block';
-        document.getElementById('audio-stop').style.display = 'block';
+  sequence.forEach((element, index) => {
+    if (element.type == "splat") {
+      setupSplatScene(index);
+      if (index == 0) {
+        currentScene = element.scene;
+        currentCamera = element.camera;
+      }
+    } else if (element.type == "glb") {
+      setupGLBScene(index);
+      if (index == 0) {
+        currentScene = element.scene;
+        currentCamera = element.camera;
+      }
     }
+  });
+
+  setupImageScene();
+  setupVideoScene();
+  setupAudioScene();
+
+  document.getElementById("splat-text").innerText = sequence[0].description;
+
+  orbitControls = new OrbitControls(currentCamera, renderer.domElement);
+  orbitControls.enableDamping = true;
+
+  setup3DText();
+  setup3DArrows();
+
+  orbitControls3DText = new OrbitControls(
+    camera3DText,
+    renderer3DText.domElement,
+  );
+  orbitControls3DText.enableDamping = true;
+
+  orbitControls3DArrow = new OrbitControls(
+    camera3DArrow,
+    renderer3DArrow.domElement,
+  );
+  orbitControls3DArrow.enableDamping = true;
+
+  setupInput();
+
+  // Play audio for initial splat if it has one
+  if (sequence[0].audio && myAudio) {
+    myAudio.src = sequence[0].audio;
+    currentAudioSrc = sequence[0].audio;
+    myAudio.play();
+    // Show audio buttons
+    document.getElementById("audio-start").style.display = "block";
+    document.getElementById("audio-stop").style.display = "block";
+  }
 }
 
 // Initialize splat scene from sequence
 function setupSplatScene(seqIndex) {
-    let newScene = new THREE.Scene();
-    let newCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
-    newCamera.position.set(sequence[seqIndex].startPosition.x, sequence[seqIndex].startPosition.y, sequence[seqIndex].startPosition.z);
+  let newScene = new THREE.Scene();
+  let newCamera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    10000,
+  );
+  newCamera.position.set(
+    sequence[seqIndex].startPosition.x,
+    sequence[seqIndex].startPosition.y,
+    sequence[seqIndex].startPosition.z,
+  );
 
-    let newSplat = new LumaSplatsThree({
-        source: sequence[seqIndex].src,
-        enableThreeShaderIntegration: true,
-        particleRevealEnabled: false,
+  let newSplat = new LumaSplatsThree({
+    source: sequence[seqIndex].src,
+    enableThreeShaderIntegration: true,
+    particleRevealEnabled: false,
+  });
+  newSplat.position.set(0, 0, 0);
+  newSplat.scale.set(3, 3, 3); // Set scale to a visible size
 
-    });
-    newSplat.position.set(0, 0, 0);
-    newSplat.scale.set(3, 3, 3);  // Set scale to a visible size
+  // Apply rotation if specified
+  if (sequence[seqIndex].rotation) {
+    newSplat.rotation.set(
+      sequence[seqIndex].rotation.x,
+      sequence[seqIndex].rotation.y,
+      sequence[seqIndex].rotation.z,
+    );
+  }
 
-    // Apply rotation if specified
-    if (sequence[seqIndex].rotation) {
-        newSplat.rotation.set(
-            sequence[seqIndex].rotation.x,
-            sequence[seqIndex].rotation.y,
-            sequence[seqIndex].rotation.z
-        );
-    }
+  // Check if bounds have been added
+  if (sequence[seqIndex].bounds != null) {
+    // Custom shader hook to cull splats based on dynamic bounds
+    newSplat.setShaderHooks({
+      vertexShaderHooks: {
+        additionalUniforms: {
+          xPos: ["float", sequence[seqIndex].bounds.xpos],
+          yPos: ["float", sequence[seqIndex].bounds.ypos],
+          zPos: ["float", sequence[seqIndex].bounds.zpos],
+          xNeg: ["float", sequence[seqIndex].bounds.xneg],
+          yNeg: ["float", sequence[seqIndex].bounds.yneg],
+          zNeg: ["float", sequence[seqIndex].bounds.zneg],
+        },
 
-    // Check if bounds have been added
-    if (sequence[seqIndex].bounds != null) {
-        // Custom shader hook to cull splats based on dynamic bounds
-        newSplat.setShaderHooks({
-            vertexShaderHooks: {
-                additionalUniforms: {
-                    xPos: ['float', sequence[seqIndex].bounds.xpos],
-                    yPos: ['float', sequence[seqIndex].bounds.ypos],
-                    zPos: ['float', sequence[seqIndex].bounds.zpos],
-                    xNeg: ['float', sequence[seqIndex].bounds.xneg],
-                    yNeg: ['float', sequence[seqIndex].bounds.yneg],
-                    zNeg: ['float', sequence[seqIndex].bounds.zneg],
-                },
-
-                getSplatTransform: `
+        getSplatTransform: `
             (vec3 position, uint layersBitmask) {
                 float x = 1.;
                 float z = 1.;
@@ -196,363 +248,432 @@ function setupSplatScene(seqIndex) {
                 );
             }
         `,
-            }
-        });
-    }
+      },
+    });
+  }
 
-    newSplat.onLoad = () => {
-        newScene.add(newSplat);
-    };
+  newSplat.onLoad = () => {
+    newScene.add(newSplat);
+  };
 
-    if (sequence[seqIndex].customSkybox != null) {
-        const hdrLoader = new RGBELoader();
-        hdrLoader.loadAsync(sequence[seqIndex].customSkybox).then(hdrTexture => {
-            hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
-            newScene.background = hdrTexture;
-        });
-    }
+  if (sequence[seqIndex].customSkybox != null) {
+    const hdrLoader = new RGBELoader();
+    hdrLoader.loadAsync(sequence[seqIndex].customSkybox).then((hdrTexture) => {
+      hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
+      newScene.background = hdrTexture;
+    });
+  }
 
-    sequence[seqIndex].scene = newScene;
-    sequence[seqIndex].camera = newCamera;
-    sequence[seqIndex].splat = newSplat;
+  sequence[seqIndex].scene = newScene;
+  sequence[seqIndex].camera = newCamera;
+  sequence[seqIndex].splat = newSplat;
 }
 
 function setupImageScene() {
-    // prepare an <img> element to show images in the UI
-    imageContainer.style.display = 'none';
-    myImage = new Image();
-    myImage.style.display = 'none';
-    myImage.style.maxWidth = '100vw';
-    myImage.style.maxHeight = '100vh';
-    imageContainer.appendChild(myImage);
+  // prepare an <img> element to show images in the UI
+  imageContainer.style.display = "none";
+  myImage = new Image();
+  myImage.style.display = "none";
+  myImage.style.maxWidth = "100vw";
+  myImage.style.maxHeight = "100vh";
+  imageContainer.appendChild(myImage);
 }
 
 function setupVideoScene() {
-    // prepare a <video> element for video sequence items
-    videoContainer.style.display = 'none';
-    myVideo = document.createElement('video');
-    myVideo.controls = true;
-    myVideo.style.display = 'none';
-    myVideo.style.maxWidth = '100vw';
-    myVideo.style.maxHeight = '100vh';
-    videoContainer.appendChild(myVideo);
+  // prepare a <video> element for video sequence items
+  videoContainer.style.display = "none";
+  myVideo = document.createElement("video");
+  myVideo.controls = true;
+  myVideo.style.display = "none";
+  myVideo.style.maxWidth = "100vw";
+  myVideo.style.maxHeight = "100vh";
+  videoContainer.appendChild(myVideo);
+}
+
+function setupGLBScene(seqIndex) {
+  let glbScene = new THREE.Scene();
+  let glbCamera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    10000,
+  );
+  glbCamera.lookAt(new THREE.Vector3(0, 0, 0));
+  glbScene.add(new THREE.AmbientLight(0xffffff, 4));
+
+  const gltfLoader = new GLTFLoader();
+  gltfLoader.load(sequence[seqIndex].src, (gltf) => {
+    myGLB = gltf.scene;
+    myGLB.scale.set(
+      sequence[seqIndex].scale.x,
+      sequence[seqIndex].scale.y,
+      sequence[seqIndex].scale.z,
+    ); // Scale the model
+    myGLB.position.set(
+      sequence[seqIndex].position.x,
+      sequence[seqIndex].position.y,
+      sequence[seqIndex].position.z,
+    ); // Position the model
+    glbScene.add(myGLB);
+  });
+  if (sequence[seqIndex].customSkybox != null) {
+    const hdrLoader = new RGBELoader();
+    hdrLoader.loadAsync(sequence[seqIndex].customSkybox).then((hdrTexture) => {
+      hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
+      glbScene.background = hdrTexture;
+    });
+  }
+  sequence[seqIndex].scene = glbScene;
+  sequence[seqIndex].camera = glbCamera;
 }
 
 function setupAudioScene() {
-    // prepare an <audio> element for audio playback
-    audioContainer = document.getElementById('audio-container') || document.createElement('div');
-    audioContainer.id = 'audio-container';
-    audioContainer.style.display = 'none';
-    myAudio = document.createElement('audio');
-    myAudio.controls = true;
-    myAudio.style.maxWidth = '100vw';
-    audioContainer.appendChild(myAudio);
-    if (!document.getElementById('audio-container')) {
-        document.body.appendChild(audioContainer);
-    }
+  // prepare an <audio> element for audio playback
+  audioContainer =
+    document.getElementById("audio-container") || document.createElement("div");
+  audioContainer.id = "audio-container";
+  audioContainer.style.display = "none";
+  myAudio = document.createElement("audio");
+  myAudio.controls = true;
+  myAudio.style.maxWidth = "100vw";
+  audioContainer.appendChild(myAudio);
+  if (!document.getElementById("audio-container")) {
+    document.body.appendChild(audioContainer);
+  }
 }
 
 function setup3DText() {
-    // Scene for the 3D text
-    scene3DText = new THREE.Scene();
-    camera3DText = new THREE.OrthographicCamera(960 / - 2, 960 / 2, 150 / 2, 150 / - 2, 0.001, 1000);
-    camera3DText.lookAt(new THREE.Vector3(0, 0, 0));
-    scene3DText.add(new THREE.AmbientLight(0xffffff, 60));
-    renderer3DText = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true
-    });
-    renderer3DText.setClearColor(0x000000, 0);
-    renderer3DText.setSize(960, 150, false);
-    document.getElementById('model-container').appendChild(renderer3DText.domElement);
+  // Scene for the 3D text
+  scene3DText = new THREE.Scene();
+  camera3DText = new THREE.OrthographicCamera(
+    960 / -2,
+    960 / 2,
+    150 / 2,
+    150 / -2,
+    0.001,
+    1000,
+  );
+  camera3DText.lookAt(new THREE.Vector3(0, 0, 0));
+  scene3DText.add(new THREE.AmbientLight(0xffffff, 60));
+  renderer3DText = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: true,
+  });
+  renderer3DText.setClearColor(0x000000, 0);
+  renderer3DText.setSize(960, 150, false);
+  document
+    .getElementById("model-container")
+    .appendChild(renderer3DText.domElement);
 
-    const gltfLoader = new GLTFLoader();
-    gltfLoader.load('/mesh/title7.glb', (gltf) => {
-        titleMesh = gltf.scene;
-        titleMesh.scale.set(10, 10, 10);  // Scale the model
-        titleMesh.position.set(0, 0, 0);  // Position the model
-        scene3DText.add(titleMesh);
-    });
-    const hdrLoader = new RGBELoader();
-    hdrLoader.loadAsync('/hdr/misty_pines_2k.hdr').then(hdrTexture => {
-        hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
-        scene3DText.environment = hdrTexture;
-    });
-
+  const gltfLoader = new GLTFLoader();
+  gltfLoader.load("/mesh/title7.glb", (gltf) => {
+    titleMesh = gltf.scene;
+    titleMesh.scale.set(10, 10, 10); // Scale the model
+    titleMesh.position.set(0, 0, 0); // Position the model
+    scene3DText.add(titleMesh);
+  });
+  const hdrLoader = new RGBELoader();
+  hdrLoader.loadAsync("/hdr/misty_pines_2k.hdr").then((hdrTexture) => {
+    hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
+    scene3DText.environment = hdrTexture;
+  });
 }
 
 function setup3DArrows() {
-    // Scene for the 3D Arrows
-    scene3DArrow = new THREE.Scene();
-    camera3DArrow = new THREE.OrthographicCamera(960 / - 2, 960 / 2, 150 / 2, 150 / - 2, 0.001, 1000);
-    camera3DArrow.lookAt(new THREE.Vector3(0, 0, 0));
-    scene3DArrow.add(new THREE.AmbientLight(0xffffff, 60));
-    renderer3DArrow = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true
-    });
-    renderer3DArrow.setClearColor(0x000000, 0);
-    renderer3DArrow.setSize(2000, 150, false);
-    document.getElementById('model-container').appendChild(renderer3DArrow.domElement);
+  // Scene for the 3D Arrows
+  scene3DArrow = new THREE.Scene();
+  camera3DArrow = new THREE.OrthographicCamera(
+    960 / -2,
+    960 / 2,
+    150 / 2,
+    150 / -2,
+    0.001,
+    1000,
+  );
+  camera3DArrow.lookAt(new THREE.Vector3(0, 0, 0));
+  scene3DArrow.add(new THREE.AmbientLight(0xffffff, 60));
+  renderer3DArrow = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: true,
+  });
+  renderer3DArrow.setClearColor(0x000000, 0);
+  renderer3DArrow.setSize(2000, 150, false);
+  document
+    .getElementById("model-container")
+    .appendChild(renderer3DArrow.domElement);
 
-    const gltfLoader = new GLTFLoader();
-    gltfLoader.load('/mesh/arrow.glb', (gltf) => {
-        arrowMesh = gltf.scene;
-        arrowMesh.scale.set(10, 10, 10);  // Scale the model
-        arrowMesh.position.set(0, 0, 0);  // Position the model
-        scene3DArrow.add(arrowMesh);
-    });
-    const hdrLoader = new RGBELoader();
-    hdrLoader.loadAsync('/hdr/misty_pines_2k.hdr').then(hdrTexture => {
-        hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
-        scene3DArrow.environment = hdrTexture;
-    });
-
+  const gltfLoader = new GLTFLoader();
+  gltfLoader.load("/mesh/arrow.glb", (gltf) => {
+    arrowMesh = gltf.scene;
+    arrowMesh.scale.set(10, 10, 10); // Scale the model
+    arrowMesh.position.set(0, 0, 0); // Position the model
+    scene3DArrow.add(arrowMesh);
+  });
+  const hdrLoader = new RGBELoader();
+  hdrLoader.loadAsync("/hdr/misty_pines_2k.hdr").then((hdrTexture) => {
+    hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
+    scene3DArrow.environment = hdrTexture;
+  });
 }
 
-
 function setupInput() {
-    // Event listeners for keyboard and click-based navigation
-    document.addEventListener('DOMContentLoaded', () => {
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'ArrowRight') {
-                currentIndex = (currentIndex + 1) % sequence.length;
-                showCurrentContent();
-            }
-            if (event.key === 'ArrowLeft') {
-                currentIndex = (currentIndex - 1 + sequence.length) % sequence.length;
-                showCurrentContent();
-            }
-            if (event.key === 'x') {
-                console.log('ArrowLeft pressed');
-                xpositive.value = xpositive.value - 0.1;
-            }
-            if (event.key === 'y') {
-                ypositive.value = ypositive.value - 0.1;
-            }
-            if (event.key === 'z') {
-                zpositive.value = zpositive.value - 0.1;
-            }
-            if (event.key === 'a') {
-                xnegative.value = xnegative.value + 0.1;
-            }
-            if (event.key === 'b') {
-                ynegative.value = ynegative.value + 0.1;
-            }
-            if (event.key === 'c') {
-                znegative.value = znegative.value + 0.1;
-            }
-            // Rotation controls for current splat
-            if (event.key === 'q') {
-                if (sequence[currentIndex].rotation) {
-                    sequence[currentIndex].rotation.x += 0.1;
-                    console.log(`Rotation: x: ${sequence[currentIndex].rotation.x.toFixed(2)}, y: ${sequence[currentIndex].rotation.y.toFixed(2)}, z: ${sequence[currentIndex].rotation.z.toFixed(2)}`);
-                }
-            }
-            if (event.key === 'w') {
-                if (sequence[currentIndex].rotation) {
-                    sequence[currentIndex].rotation.x -= 0.1;
-                    console.log(`Rotation: x: ${sequence[currentIndex].rotation.x.toFixed(2)}, y: ${sequence[currentIndex].rotation.y.toFixed(2)}, z: ${sequence[currentIndex].rotation.z.toFixed(2)}`);
-                }
-            }
-            if (event.key === 'e') {
-                if (sequence[currentIndex].rotation) {
-                    sequence[currentIndex].rotation.y += 0.1;
-                    console.log(`Rotation: x: ${sequence[currentIndex].rotation.x.toFixed(2)}, y: ${sequence[currentIndex].rotation.y.toFixed(2)}, z: ${sequence[currentIndex].rotation.z.toFixed(2)}`);
-                }
-            }
-            if (event.key === 'r') {
-                if (sequence[currentIndex].rotation) {
-                    sequence[currentIndex].rotation.y -= 0.1;
-                    console.log(`Rotation: x: ${sequence[currentIndex].rotation.x.toFixed(2)}, y: ${sequence[currentIndex].rotation.y.toFixed(2)}, z: ${sequence[currentIndex].rotation.z.toFixed(2)}`);
-                }
-            }
-            if (event.key === 't') {
-                if (sequence[currentIndex].rotation) {
-                    sequence[currentIndex].rotation.z += 0.1;
-                    console.log(`Rotation: x: ${sequence[currentIndex].rotation.x.toFixed(2)}, y: ${sequence[currentIndex].rotation.y.toFixed(2)}, z: ${sequence[currentIndex].rotation.z.toFixed(2)}`);
-                }
-            }
-            if (event.key === 'y') {
-                if (sequence[currentIndex].rotation) {
-                    sequence[currentIndex].rotation.z -= 0.1;
-                    console.log(`Rotation: x: ${sequence[currentIndex].rotation.x.toFixed(2)}, y: ${sequence[currentIndex].rotation.y.toFixed(2)}, z: ${sequence[currentIndex].rotation.z.toFixed(2)}`);
-                }
-            }
-        });
-
-        // Event listeners for mouse navigation
-        document.getElementById('arrow-left').addEventListener('click', () => {
-            currentIndex = (currentIndex - 1 + sequence.length) % sequence.length;
-            showCurrentContent();
-        });
-        document.getElementById('arrow-right').addEventListener('click', () => {
-            currentIndex = (currentIndex + 1) % sequence.length;
-            showCurrentContent();
-        });
-
-        // Click handler for description to toggle answer field
-        document.getElementById('splat-text').addEventListener('click', toggleAnswer);
-        document.getElementById('answer-text').addEventListener('click', toggleAnswer);
-
-        // Audio control buttons
-        document.getElementById('audio-start').addEventListener('click', () => {
-            if (myAudio) myAudio.play();
-        });
-        document.getElementById('audio-stop').addEventListener('click', () => {
-            if (myAudio) myAudio.pause();
-        });
+  // Event listeners for keyboard and click-based navigation
+  document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowRight") {
+        currentIndex = (currentIndex + 1) % sequence.length;
+        showCurrentContent();
+      }
+      if (event.key === "ArrowLeft") {
+        currentIndex = (currentIndex - 1 + sequence.length) % sequence.length;
+        showCurrentContent();
+      }
+      if (event.key === "x") {
+        console.log("ArrowLeft pressed");
+        xpositive.value = xpositive.value - 0.1;
+      }
+      if (event.key === "y") {
+        ypositive.value = ypositive.value - 0.1;
+      }
+      if (event.key === "z") {
+        zpositive.value = zpositive.value - 0.1;
+      }
+      if (event.key === "a") {
+        xnegative.value = xnegative.value + 0.1;
+      }
+      if (event.key === "b") {
+        ynegative.value = ynegative.value + 0.1;
+      }
+      if (event.key === "c") {
+        znegative.value = znegative.value + 0.1;
+      }
+      // Rotation controls for current splat
+      if (event.key === "q") {
+        if (sequence[currentIndex].rotation) {
+          sequence[currentIndex].rotation.x += 0.1;
+          console.log(
+            `Rotation: x: ${sequence[currentIndex].rotation.x.toFixed(2)}, y: ${sequence[currentIndex].rotation.y.toFixed(2)}, z: ${sequence[currentIndex].rotation.z.toFixed(2)}`,
+          );
+        }
+      }
+      if (event.key === "w") {
+        if (sequence[currentIndex].rotation) {
+          sequence[currentIndex].rotation.x -= 0.1;
+          console.log(
+            `Rotation: x: ${sequence[currentIndex].rotation.x.toFixed(2)}, y: ${sequence[currentIndex].rotation.y.toFixed(2)}, z: ${sequence[currentIndex].rotation.z.toFixed(2)}`,
+          );
+        }
+      }
+      if (event.key === "e") {
+        if (sequence[currentIndex].rotation) {
+          sequence[currentIndex].rotation.y += 0.1;
+          console.log(
+            `Rotation: x: ${sequence[currentIndex].rotation.x.toFixed(2)}, y: ${sequence[currentIndex].rotation.y.toFixed(2)}, z: ${sequence[currentIndex].rotation.z.toFixed(2)}`,
+          );
+        }
+      }
+      if (event.key === "r") {
+        if (sequence[currentIndex].rotation) {
+          sequence[currentIndex].rotation.y -= 0.1;
+          console.log(
+            `Rotation: x: ${sequence[currentIndex].rotation.x.toFixed(2)}, y: ${sequence[currentIndex].rotation.y.toFixed(2)}, z: ${sequence[currentIndex].rotation.z.toFixed(2)}`,
+          );
+        }
+      }
+      if (event.key === "t") {
+        if (sequence[currentIndex].rotation) {
+          sequence[currentIndex].rotation.z += 0.1;
+          console.log(
+            `Rotation: x: ${sequence[currentIndex].rotation.x.toFixed(2)}, y: ${sequence[currentIndex].rotation.y.toFixed(2)}, z: ${sequence[currentIndex].rotation.z.toFixed(2)}`,
+          );
+        }
+      }
+      if (event.key === "y") {
+        if (sequence[currentIndex].rotation) {
+          sequence[currentIndex].rotation.z -= 0.1;
+          console.log(
+            `Rotation: x: ${sequence[currentIndex].rotation.x.toFixed(2)}, y: ${sequence[currentIndex].rotation.y.toFixed(2)}, z: ${sequence[currentIndex].rotation.z.toFixed(2)}`,
+          );
+        }
+      }
     });
+
+    // Event listeners for mouse navigation
+    document.getElementById("arrow-left").addEventListener("click", () => {
+      currentIndex = (currentIndex - 1 + sequence.length) % sequence.length;
+      showCurrentContent();
+    });
+    document.getElementById("arrow-right").addEventListener("click", () => {
+      currentIndex = (currentIndex + 1) % sequence.length;
+      showCurrentContent();
+    });
+
+    // Click handler for description to toggle answer field
+    document
+      .getElementById("splat-text")
+      .addEventListener("click", toggleAnswer);
+    document
+      .getElementById("answer-text")
+      .addEventListener("click", toggleAnswer);
+
+    // Audio control buttons
+    document.getElementById("audio-start").addEventListener("click", () => {
+      if (myAudio) myAudio.play();
+    });
+    document.getElementById("audio-stop").addEventListener("click", () => {
+      if (myAudio) myAudio.pause();
+    });
+  });
 }
 
 function toggleAnswer() {
-    const answerElement = document.getElementById('answer-text');
-    const currentItem = sequence[currentIndex];
-    
-    // Check if answer field is visible
-    if (answerElement.classList.contains('visible')) {
-        // Hide the answer field
-        answerElement.classList.remove('visible');
-    } else {
-        // Show the answer field
-        answerElement.innerText = currentItem.answer || 'Keine Antwort vorhanden';
-        answerElement.classList.add('visible');
-    }
+  const answerElement = document.getElementById("answer-text");
+  const currentItem = sequence[currentIndex];
+
+  // Check if answer field is visible
+  if (answerElement.classList.contains("visible")) {
+    // Hide the answer field
+    answerElement.classList.remove("visible");
+  } else {
+    // Show the answer field
+    answerElement.innerText = currentItem.answer || "Keine Antwort vorhanden";
+    answerElement.classList.add("visible");
+  }
 }
 
 function changeScene(scene, camera, startPosition, description) {
-    currentScene = scene;
-    currentCamera = camera;
-    camera.position.set(startPosition.x, startPosition.y, startPosition.z);
-    orbitControls.object = currentCamera;
-    document.getElementById('splat-text').innerText = description;
-    document.getElementById('answer-text').classList.remove('visible');
-    document.getElementById('answer-text').innerText = '';
+  currentScene = scene;
+  currentCamera = camera;
+  camera.position.set(startPosition.x, startPosition.y, startPosition.z);
+  orbitControls.object = currentCamera;
+  document.getElementById("splat-text").innerText = description;
+  document.getElementById("answer-text").classList.remove("visible");
+  document.getElementById("answer-text").innerText = "";
 }
 
 // Funktion zum Anzeigen des aktuellen Contents
 function showCurrentContent() {
-    renderer.domElement.style.display = 'none';
-    imageContainer.style.display = 'none';
-    if (myImage) myImage.style.display = 'none';
-    videoContainer.style.display = 'none';
-    if (myVideo) myVideo.style.display = 'none';
-    
-    const item = sequence[currentIndex];
-    
-    // Stop audio only if the new item has different audio
-    if (item.audio !== currentAudioSrc) {
-        if (myAudio) {
-            myAudio.pause();
-            myAudio.currentTime = 0;
-            audioContainer.style.display = 'none';
-        }
-    }
-    // 3D-Objekt-Container
-    let glbContainer = document.getElementById('glb-container');
-    if (glbContainer) glbContainer.style.display = 'none';
-    // Text-Container
-    let textContainer = document.getElementById('text-container');
-    if (textContainer) textContainer.style.display = 'none';
-    // Audio-Element
-    let audioElem = document.getElementById('audio-player');
-    if (audioElem) {
-        audioElem.pause();
-        audioElem.style.display = 'none';
-    }
+  renderer.domElement.style.display = "none";
+  imageContainer.style.display = "none";
+  if (myImage) {
+    myImage.style.display = "none";
+  }
+  videoContainer.style.display = "none";
+  if (myVideo) {
+    myVideo.style.display = "none";
+  }
+  const item = sequence[currentIndex];
 
-    if (item.type === 'splat') {
-        renderer.domElement.style.display = 'block';
-        changeScene(item.scene, item.camera, item.startPosition, item.description);
-    } else if (item.type === 'image') {
-        imageContainer.style.display = 'flex';
-        if (myImage) {
-            myImage.src = item.src;
-            myImage.style.display = 'block';
-            if (item.width) myImage.width = item.width;
-            if (item.height) myImage.height = item.height;
-        }
-        document.getElementById('splat-text').innerText = item.description || "Bild";
-        document.getElementById('answer-text').classList.remove('visible');
-        document.getElementById('answer-text').innerText = '';
-    } else if (item.type === 'video') {
-        videoContainer.style.display = 'flex';
-        if (myVideo) {
-            myVideo.src = item.src;
-            myVideo.style.display = 'block';
-            if (item.width) myVideo.width = item.width;
-            if (item.height) myVideo.height = item.height;
-            myVideo.autoplay = true;
-            myVideo.loop = true;
-            myVideo.load();
-            // Für Autoplay ohne User-Interaktion ggf. muted setzen:
-            myVideo.muted = true;
-            myVideo.play();
-        }
-        document.getElementById('splat-text').innerText = item.description || "Video";
-        document.getElementById('answer-text').classList.remove('visible');
-        document.getElementById('answer-text').innerText = '';
+  // Stop audio only if the new item has different audio
+  if (item.audio !== currentAudioSrc) {
+    if (myAudio) {
+      myAudio.pause();
+      myAudio.currentTime = 0;
+      audioContainer.style.display = "none";
     }
-    
-    // Handle audio playback (can be added to any content type)
-    if (item.audio) {
-        audioContainer.style.display = 'block';
-        document.getElementById('audio-start').style.display = 'block';
-        document.getElementById('audio-stop').style.display = 'block';
-        if (myAudio) {
-            // Only load and play if it's a different audio file
-            if (item.audio !== currentAudioSrc) {
-                myAudio.src = item.audio;
-                currentAudioSrc = item.audio;
-                myAudio.play();
-            }
-            // If same audio, it keeps playing
-        }
-    } else {
-        document.getElementById('audio-start').style.display = 'none';
-        document.getElementById('audio-stop').style.display = 'none';
-        currentAudioSrc = null;
+  }
+  // Text-Container
+  let textContainer = document.getElementById("text-container");
+  if (textContainer) textContainer.style.display = "none";
+  // Audio-Element
+  let audioElem = document.getElementById("audio-player");
+  if (audioElem) {
+    audioElem.pause();
+    audioElem.style.display = "none";
+  }
+
+  if (item.type === "splat") {
+    renderer.domElement.style.display = "block";
+    changeScene(item.scene, item.camera, item.startPosition, item.description);
+  } else if (item.type === "glb") {
+    renderer.domElement.style.display = "block";
+    changeScene(item.scene, item.camera, item.startPosition, item.description);
+  } else if (item.type === "image") {
+    imageContainer.style.display = "flex";
+    if (myImage) {
+      myImage.src = item.src;
+      myImage.style.display = "block";
+      if (item.width) myImage.width = item.width;
+      if (item.height) myImage.height = item.height;
     }
-    // ...existing code for 3dObject, text, audio...
+    document.getElementById("splat-text").innerText =
+      item.description || "Bild";
+    document.getElementById("answer-text").classList.remove("visible");
+    document.getElementById("answer-text").innerText = "";
+  } else if (item.type === "video") {
+    videoContainer.style.display = "flex";
+    if (myVideo) {
+      myVideo.src = item.src;
+      myVideo.style.display = "block";
+      if (item.width) myVideo.width = item.width;
+      if (item.height) myVideo.height = item.height;
+      myVideo.autoplay = true;
+      myVideo.loop = true;
+      myVideo.load();
+      // Für Autoplay ohne User-Interaktion ggf. muted setzen:
+      myVideo.muted = true;
+      myVideo.play();
+    }
+    document.getElementById("splat-text").innerText =
+      item.description || "Video";
+    document.getElementById("answer-text").classList.remove("visible");
+    document.getElementById("answer-text").innerText = "";
+  }
+
+  // Handle audio playback (can be added to any content type)
+  if (item.audio) {
+    audioContainer.style.display = "block";
+    document.getElementById("audio-start").style.display = "block";
+    document.getElementById("audio-stop").style.display = "block";
+    if (myAudio) {
+      // Only load and play if it's a different audio file
+      if (item.audio !== currentAudioSrc) {
+        myAudio.src = item.audio;
+        currentAudioSrc = item.audio;
+        myAudio.play();
+      }
+      // If same audio, it keeps playing
+    }
+  } else {
+    document.getElementById("audio-start").style.display = "none";
+    document.getElementById("audio-stop").style.display = "none";
+    currentAudioSrc = null;
+  }
+  // ...existing code for 3dObject, text, audio...
 }
-
-
-
-
-
-
 
 // Animation loop per frame
 function animate() {
-    orbitControls.update();
+  orbitControls.update();
 
-    // Apply rotation updates to current splat
-    if (sequence[currentIndex].type === 'splat' && sequence[currentIndex].splat && sequence[currentIndex].rotation) {
-        sequence[currentIndex].splat.rotation.set(
-            sequence[currentIndex].rotation.x,
-            sequence[currentIndex].rotation.y,
-            sequence[currentIndex].rotation.z
-        );
-    }
+  // Apply rotation updates to current splat
+  if (
+    sequence[currentIndex].type === "splat" &&
+    sequence[currentIndex].splat &&
+    sequence[currentIndex].rotation
+  ) {
+    sequence[currentIndex].splat.rotation.set(
+      sequence[currentIndex].rotation.x,
+      sequence[currentIndex].rotation.y,
+      sequence[currentIndex].rotation.z,
+    );
+  }
 
-    if (sequence[currentIndex].customSkybox != null) {
-        // Deactivate splat skybox for the current frame to prevent it from covering up the hdr
-        sequence[currentIndex].splat.skybox.visible = false;
-    }
+  if (sequence[currentIndex].customSkybox != null && sequence[currentIndex].type === "splat") {
+    // Deactivate splat skybox for the current frame to prevent it from covering up the hdr
+    sequence[currentIndex].splat.skybox.visible = false;
+  }
 
-    // Hovering animation for the title
-    if (titleMesh) {
-        titleMesh.position.x += hoverDirection * hoverSpeed;
-        if (titleMesh.position.x > 1 + hoverHeight) {
-            hoverDirection = -1;
-        } else if (titleMesh.position.x < 1 - hoverHeight) {
-            hoverDirection = 1;
-        }
+  // Hovering animation for the title
+  if (titleMesh) {
+    titleMesh.position.x += hoverDirection * hoverSpeed;
+    if (titleMesh.position.x > 1 + hoverHeight) {
+      hoverDirection = -1;
+    } else if (titleMesh.position.x < 1 - hoverHeight) {
+      hoverDirection = 1;
     }
-    renderer.render(currentScene, currentCamera);
-    renderer3DText.render(scene3DText, camera3DText)
-    renderer3DArrow.render(scene3DArrow, camera3DArrow);
+  }
+  renderer.render(currentScene, currentCamera);
+  renderer3DText.render(scene3DText, camera3DText);
+  renderer3DArrow.render(scene3DArrow, camera3DArrow);
 }
-
-
-

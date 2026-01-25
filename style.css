@@ -67,7 +67,7 @@ body {
     opacity: 1;
 }
 
-#splat-container {
+#render-container {
     position: absolute;
     z-index: 1;
 }
@@ -107,6 +107,7 @@ body {
     width: 50%;
     left: 25%;
 }
+
 
 /* Pfeile für die Navigation */
 .arrow {
