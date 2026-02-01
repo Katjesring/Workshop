@@ -30,7 +30,7 @@ let splats = [];
 
 // 3D text / title model and its scene/camera
 let titleMesh, scene3DText, camera3DText;
-let arrowMesh, scene3DArrowRight, scene3DArrowLeft, camera3DArrow;
+let arrowMeshRight, arrowMeshLeft, scene3DArrowRight, scene3DArrowLeft, camera3DArrow;
 
 //parameters for the title hover animation
 let hoverDirection = 10; // direction multiplier applied to x position each frame
@@ -400,8 +400,11 @@ function setup3DArrows() {
     .getElementById("arrow-container")
     .appendChild(renderer3DArrowRight.domElement);
 
-  renderer3DArrowRight.domElement.setAttribute("id", "arrow-model-container-right");
-  
+  renderer3DArrowRight.domElement.setAttribute(
+    "id",
+    "arrow-model-container-right",
+  );
+
   renderer3DArrowLeft = new THREE.WebGLRenderer({
     antialias: true,
     alpha: true,
@@ -411,20 +414,23 @@ function setup3DArrows() {
   document
     .getElementById("arrow-container")
     .appendChild(renderer3DArrowLeft.domElement);
-  renderer3DArrowLeft.domElement.setAttribute("id", "arrow-model-container-left");
+  renderer3DArrowLeft.domElement.setAttribute(
+    "id",
+    "arrow-model-container-left",
+  );
 
   const gltfLoader = new GLTFLoader();
   gltfLoader.load("/mesh/arrow.glb", (gltf) => {
-    arrowMesh = gltf.scene;
-    arrowMesh.scale.set(10, 10, 10); // Scale the model
-    arrowMesh.position.set(0, 0, 0); // Position the model
-    scene3DArrowRight.add(arrowMesh);
+    arrowMeshRight = gltf.scene;
+    arrowMeshRight.scale.set(10, 10, 10); // Scale the model
+    arrowMeshRight.position.set(0, 0, 0); // Position the model
+    scene3DArrowRight.add(arrowMeshRight);
   });
   gltfLoader.load("/mesh/arrow.glb", (gltf) => {
-    arrowMesh = gltf.scene;
-    arrowMesh.scale.set(-10, 10, 10); // Scale the model
-    arrowMesh.position.set(0, 0, 0); // Position the model
-    scene3DArrowLeft.add(arrowMesh);
+    arrowMeshLeft = gltf.scene;
+    arrowMeshLeft.scale.set(-10, 10, 10); // Scale the model
+    arrowMeshLeft.position.set(0, 0, 0); // Position the model
+    scene3DArrowLeft.add(arrowMeshLeft);
   });
   const hdrLoader = new RGBELoader();
   hdrLoader.loadAsync("/hdr/misty_pines_2k.hdr").then((hdrTexture) => {
@@ -517,14 +523,18 @@ function setupInput() {
     });
 
     // Event listeners for mouse navigation
-    document.getElementById("arrow-model-container-left").addEventListener("click", () => {
-      currentIndex = (currentIndex - 1 + sequence.length) % sequence.length;
-      showCurrentContent();
-    });
-    document.getElementById("arrow-model-container-right").addEventListener("click", () => {
-      currentIndex = (currentIndex + 1) % sequence.length;
-      showCurrentContent();
-    });
+    document
+      .getElementById("arrow-model-container-left")
+      .addEventListener("click", () => {
+        currentIndex = (currentIndex - 1 + sequence.length) % sequence.length;
+        showCurrentContent();
+      });
+    document
+      .getElementById("arrow-model-container-right")
+      .addEventListener("click", () => {
+        currentIndex = (currentIndex + 1) % sequence.length;
+        showCurrentContent();
+      });
 
     // Click handler for description to toggle answer field
     document
@@ -726,14 +736,24 @@ function animate() {
   }*/
 
   // Hovering animation for the title
-  if (titleMesh) {
+  if(titleMesh){
     titleMesh.position.x += hoverDirection * hoverSpeed;
-    if (titleMesh.position.x > 1 + hoverHeight) {
+  if (titleMesh.position.x > 1 + hoverHeight) {
+    hoverDirection = -1;
+  } else if (titleMesh.position.x < 1 - hoverHeight) {
+    hoverDirection = 1;
+  }
+  }
+  if(arrowMeshRight && arrowMeshLeft){
+    arrowMeshRight.position.y += hoverDirection * hoverSpeed;
+    arrowMeshLeft.position.y -= hoverDirection * hoverSpeed;
+    if (arrowMeshRight.position.y > 1 + hoverHeight) {
       hoverDirection = -1;
-    } else if (titleMesh.position.x < 1 - hoverHeight) {
+    } else if (arrowMeshRight.position.y < 1 - hoverHeight) {
       hoverDirection = 1;
     }
   }
+
   renderer.render(currentScene, currentCamera);
   renderer3DText.render(scene3DText, camera3DText);
   renderer3DArrowRight.render(scene3DArrowRight, camera3DArrow);
