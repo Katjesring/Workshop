@@ -60,7 +60,7 @@ let sequence = [
     customSkybox: "/hdr/misty_pines_2k.hdr",
     description: "Wer bin ich heute? Wer will ich sein?",
     answer:
-      "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.  ",
+      "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.  ",
     audio: "/audio/ambient.mp3",
   },
   {
@@ -148,7 +148,7 @@ function init() {
   setupVideoScene();
   setupAudioScene();
 
-  document.getElementById("splat-text").innerText = sequence[0].description;
+  document.getElementById("question-text").innerText = sequence[0].description;
 
   orbitControls = new OrbitControls(currentCamera, renderer.domElement);
   orbitControls.enableDamping = true;
@@ -510,7 +510,7 @@ function setupInput() {
 
     // Click handler for description to toggle answer field
     document
-      .getElementById("splat-text")
+      .getElementById("question-text")
       .addEventListener("click", toggleAnswer);
     document
       .getElementById("answer-text")
@@ -528,16 +528,23 @@ function setupInput() {
 
 function toggleAnswer() {
   const answerElement = document.getElementById("answer-text");
+  const textWrapper = document.getElementById("text-wrapper");
   const currentItem = sequence[currentIndex];
 
   // Check if answer field is visible
   if (answerElement.classList.contains("visible")) {
     // Hide the answer field
     answerElement.classList.remove("visible");
+    if (textWrapper) {
+      textWrapper.classList.remove("answer-open");
+    }
   } else {
     // Show the answer field
     answerElement.innerText = currentItem.answer || "Keine Antwort vorhanden";
     answerElement.classList.add("visible");
+    if (textWrapper) {
+      textWrapper.classList.add("answer-open");
+    }
   }
 }
 
@@ -546,9 +553,13 @@ function changeScene(scene, camera, startPosition, description) {
   currentCamera = camera;
   camera.position.set(startPosition.x, startPosition.y, startPosition.z);
   orbitControls.object = currentCamera;
-  document.getElementById("splat-text").innerText = description;
+  document.getElementById("question-text").innerText = description;
   document.getElementById("answer-text").classList.remove("visible");
   document.getElementById("answer-text").innerText = "";
+  const textWrapper = document.getElementById("text-wrapper");
+  if (textWrapper) {
+    textWrapper.classList.remove("answer-open");
+  }
 }
 
 // Funktion zum Anzeigen des aktuellen Contents
@@ -596,10 +607,14 @@ function showCurrentContent() {
       if (item.width) myImage.width = item.width;
       if (item.height) myImage.height = item.height;
     }
-    document.getElementById("splat-text").innerText =
+    document.getElementById("question-text").innerText =
       item.description || "Bild";
     document.getElementById("answer-text").classList.remove("visible");
     document.getElementById("answer-text").innerText = "";
+    const textWrapper = document.getElementById("text-wrapper");
+    if (textWrapper) {
+      textWrapper.classList.remove("answer-open");
+    }
   } else if (item.type === "video") {
     videoContainer.style.display = "flex";
     if (myVideo) {
@@ -614,10 +629,14 @@ function showCurrentContent() {
       myVideo.muted = true;
       myVideo.play();
     }
-    document.getElementById("splat-text").innerText =
+    document.getElementById("question-text").innerText =
       item.description || "Video";
     document.getElementById("answer-text").classList.remove("visible");
     document.getElementById("answer-text").innerText = "";
+    const textWrapper = document.getElementById("text-wrapper");
+    if (textWrapper) {
+      textWrapper.classList.remove("answer-open");
+    }
   }
 
   // Handle audio playback (can be added to any content type)

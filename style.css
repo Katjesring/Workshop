@@ -13,58 +13,59 @@ body {
     transform: translateX(-50%);
     z-index: 10;
     max-width: 80vw;
-    width: auto;
+    width: fit-content;
+    transition: top 0.35s ease;
+}
+
+/* When answer is open, move both elements upward */
+#text-wrapper.answer-open {
+    top: calc(50% + 120px);
 }
 
 /* Text, der unter dem Splat angezeigt wird */
-#splat-text {
+#question-text {
     display: block;
-    font-size: 18px;
+    font-size: 20px;
     color: white;
     text-align: center;
-    background: rgba(255, 255, 255, 0.15);
-    padding: 16px 32px;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    background: rgba(0, 0, 0, 0.10);
+    padding: 16px 22px;
+    border-radius: 14px;
+    backdrop-filter: blur(12px);
     font-family: 'Inter', system-ui, sans-serif;
     cursor: pointer;
     transition: background-color 0.2s ease;
-    padding: 16px 22px;
-    border-radius: 14px;
-    background: rgba(0,0,0,0.10);
-    backdrop-filter: blur(12px);
-    color: white;
-    font-size: 20px;
     font-weight: 400;
 }
 
-#splat-text:hover {
+#question-text:hover {
     background: rgba(0, 0, 0, 0.7);
 }
 
 /* Answer slides in/out below description */
 #answer-text {
-    display: block;
-    margin-top: 12px;
-    font-size: 18px;
-    color: white;
-    text-align: center;
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    transition: max-height 0.5s ease, opacity 0.4s ease;
-      padding: 16px 22px;
-  border-radius: 14px;
-  background: rgba(0,0,0,0.20);
-  backdrop-filter: blur(12px);
-  color: white;
-  font-size: 20px;
-  font-weight: 400;
+        display: none;
+        margin-top: 12px;
+        font-size: 18px;
+        color: white;
+        text-align: left;
+        overflow: hidden;
+        opacity: 0;
+        transition: max-height 0.5s ease, opacity 0.4s ease;
+        padding: 16px 22px;
+        border-radius: 14px;
+        background: rgba(0,0,0,0.20);
+        backdrop-filter: blur(12px);
+        color: white;
+        font-size: 20px;
+        font-weight: 400;
 }
 
 #answer-text.visible {
-    max-height: 1000px;
+    display: block;
+    max-height: 200px;
     opacity: 1;
+    overflow-y: auto;
 }
 
 #render-container {
