@@ -108,7 +108,7 @@ let sequence = [
     src: "/mesh/cat.glb",
     description: "Wie möchtest du in Zukunft wohnen und arbeiten?",
     answer: "",
-    startPosition: new THREE.Vector3(0, 0, 2),
+    startPosition: new THREE.Vector3(0, 1, 2),
     scale: new THREE.Vector3(10, 10, 10),
     position: new THREE.Vector3(0, 0, 0),
     customSkybox: "/hdr/misty_pines_2k.hdr"
