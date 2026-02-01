@@ -8,18 +8,16 @@ import { OrbitControls } from "https://unpkg.com/three@0.161.0/examples/jsm/cont
 let renderer,
   renderer3DText,
   orbitControls,
-  orbitControls3DText,
-  renderer3DArrowRight,
-  renderer3DArrowLeft;
+  orbitControls3DText;
 // references to the currently displayed scene & camera
 let currentScene, currentCamera;
 // shader uniform bounds used to cull splats in LumaSplatThree's custom shader hook
-let xpositive = new Uniform(0);
-let ypositive = new Uniform(0);
-let zpositive = new Uniform(0);
-let xnegative = new Uniform(0);
-let ynegative = new Uniform(0);
-let znegative = new Uniform(0);
+let xpositive = new Uniform(10);
+let ypositive = new Uniform(10);
+let zpositive = new Uniform(10);
+let xnegative = new Uniform(-10);
+let ynegative = new Uniform(-10);
+let znegative = new Uniform(-10);
 
 // Scenes and cameras for Luma Splat content
 let scenes = [];
@@ -30,7 +28,7 @@ let splats = [];
 
 // 3D text / title model and its scene/camera
 let titleMesh, scene3DText, camera3DText;
-let arrowMeshRight, arrowMeshLeft, scene3DArrowRight, scene3DArrowLeft, camera3DArrow;
+
 
 //parameters for the title hover animation
 let hoverDirection = 10; // direction multiplier applied to x position each frame
@@ -48,8 +46,6 @@ let myVideo;
 let myAudio;
 let myGLB;
 
-let startAnimationRunning = true; // Flag to control start animation
-
 let currentAudioSrc = null; // Track the currently playing audio
 
 // Reihenfolge des gezeigten Contents festlegen (nachdem alles initialisiert wurde)
@@ -58,7 +54,7 @@ let sequence = [
     type: "splat",
     src: "https://lumalabs.ai/capture/0c19c097-5d06-4fb4-a398-f0433a09d7ff",
     startPosition: new THREE.Vector3(-25, 10, 25),
-    bounds: null, //{ xpos: new Uniform(10), ypos: new Uniform(10), zpos: new Uniform(10), xneg: new Uniform(-10), yneg: new Uniform(-10), zneg: new Uniform(-10) },
+    bounds: null,
     customSkybox: "/hdr/misty_pines_2k.hdr",
     description: "Wer bin ich heute? Wer will ich sein?",
     answer:
@@ -113,7 +109,7 @@ let sequence = [
     startPosition: new THREE.Vector3(0, 1, 2),
     scale: new THREE.Vector3(10, 10, 10),
     position: new THREE.Vector3(0, 0, 0),
-    customSkybox: "/hdr/misty_pines_2k.hdr",
+    customSkybox: "/hdr/misty_pines_2k.hdr"
   },
 ];
 
@@ -156,13 +152,15 @@ function init() {
   orbitControls.enableDamping = true;
 
   setup3DText();
-  setup3DArrows();
+
 
   orbitControls3DText = new OrbitControls(
     camera3DText,
     renderer3DText.domElement,
   );
   orbitControls3DText.enableDamping = true;
+
+
 
   setupInput();
 
@@ -375,70 +373,7 @@ function setup3DText() {
   });
 }
 
-function setup3DArrows() {
-  // Scene for the 3D Arrows
-  scene3DArrowRight = new THREE.Scene();
-  scene3DArrowLeft = new THREE.Scene();
-  camera3DArrow = new THREE.OrthographicCamera(
-    150 / -2,
-    150 / 2,
-    150 / 2,
-    150 / -2,
-    0.001,
-    1000,
-  );
-  camera3DArrow.lookAt(new THREE.Vector3(0, 0, 0));
-  scene3DArrowRight.add(new THREE.AmbientLight(0xffffff, 60));
-  scene3DArrowLeft.add(new THREE.AmbientLight(0xffffff, 60));
-  renderer3DArrowRight = new THREE.WebGLRenderer({
-    antialias: true,
-    alpha: true,
-  });
-  renderer3DArrowRight.setClearColor(0x000000, 0);
-  renderer3DArrowRight.setSize(150, 150, false);
-  document
-    .getElementById("arrow-container")
-    .appendChild(renderer3DArrowRight.domElement);
 
-  renderer3DArrowRight.domElement.setAttribute(
-    "id",
-    "arrow-model-container-right",
-  );
-
-  renderer3DArrowLeft = new THREE.WebGLRenderer({
-    antialias: true,
-    alpha: true,
-  });
-  renderer3DArrowLeft.setClearColor(0x000000, 0);
-  renderer3DArrowLeft.setSize(150, 150, false);
-  document
-    .getElementById("arrow-container")
-    .appendChild(renderer3DArrowLeft.domElement);
-  renderer3DArrowLeft.domElement.setAttribute(
-    "id",
-    "arrow-model-container-left",
-  );
-
-  const gltfLoader = new GLTFLoader();
-  gltfLoader.load("/mesh/arrow.glb", (gltf) => {
-    arrowMeshRight = gltf.scene;
-    arrowMeshRight.scale.set(10, 10, 10); // Scale the model
-    arrowMeshRight.position.set(0, 0, 0); // Position the model
-    scene3DArrowRight.add(arrowMeshRight);
-  });
-  gltfLoader.load("/mesh/arrow.glb", (gltf) => {
-    arrowMeshLeft = gltf.scene;
-    arrowMeshLeft.scale.set(-10, 10, 10); // Scale the model
-    arrowMeshLeft.position.set(0, 0, 0); // Position the model
-    scene3DArrowLeft.add(arrowMeshLeft);
-  });
-  const hdrLoader = new RGBELoader();
-  hdrLoader.loadAsync("/hdr/misty_pines_2k.hdr").then((hdrTexture) => {
-    hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
-    scene3DArrowRight.environment = hdrTexture;
-    scene3DArrowLeft.environment = hdrTexture;
-  });
-}
 
 function setupInput() {
   // Event listeners for keyboard and click-based navigation
@@ -523,18 +458,14 @@ function setupInput() {
     });
 
     // Event listeners for mouse navigation
-    document
-      .getElementById("arrow-model-container-left")
-      .addEventListener("click", () => {
-        currentIndex = (currentIndex - 1 + sequence.length) % sequence.length;
-        showCurrentContent();
-      });
-    document
-      .getElementById("arrow-model-container-right")
-      .addEventListener("click", () => {
-        currentIndex = (currentIndex + 1) % sequence.length;
-        showCurrentContent();
-      });
+    document.getElementById("arrow-left").addEventListener("click", () => {
+      currentIndex = (currentIndex - 1 + sequence.length) % sequence.length;
+      showCurrentContent();
+    });
+    document.getElementById("arrow-right").addEventListener("click", () => {
+      currentIndex = (currentIndex + 1) % sequence.length;
+      showCurrentContent();
+    });
 
     // Click handler for description to toggle answer field
     document
@@ -706,56 +637,21 @@ function animate() {
     );
   }
 
-  if (
-    sequence[currentIndex].customSkybox != null &&
-    sequence[currentIndex].type === "splat"
-  ) {
+  if (sequence[currentIndex].customSkybox != null && sequence[currentIndex].type === "splat") {
     // Deactivate splat skybox for the current frame to prevent it from covering up the hdr
     sequence[currentIndex].splat.skybox.visible = false;
   }
-  /*
-  if (sequence[currentIndex].type === "splat" && startAnimationRunning) {
-    if (xpositive.value <= sequence[currentIndex].bounds.xpos.value) {
-      xpositive.value = xpositive.value + 0.05;
-    }
-    if (ypositive.value <= sequence[currentIndex].bounds.ypos.value) {
-      ypositive.value = ypositive.value + 0.05;
-    }
-    if (zpositive.value <= sequence[currentIndex].bounds.zpos.value) {
-      zpositive.value = zpositive.value + 0.05;
-    }
-    if (xnegative.value >= sequence[currentIndex].bounds.xneg.value) {
-      xnegative.value = xnegative.value - 0.05;
-    }
-    if (ynegative.value >= sequence[currentIndex].bounds.yneg.value) {
-      ynegative.value = ynegative.value - 0.05;
-    }
-    if (znegative.value >= sequence[currentIndex].bounds.zneg.value) {
-      znegative.value = znegative.value - 0.05;
-    }
-  }*/
 
   // Hovering animation for the title
-  if(titleMesh){
+  if (titleMesh) {
     titleMesh.position.x += hoverDirection * hoverSpeed;
-  if (titleMesh.position.x > 1 + hoverHeight) {
-    hoverDirection = -1;
-  } else if (titleMesh.position.x < 1 - hoverHeight) {
-    hoverDirection = 1;
-  }
-  }
-  if(arrowMeshRight && arrowMeshLeft){
-    arrowMeshRight.position.y += hoverDirection * hoverSpeed;
-    arrowMeshLeft.position.y -= hoverDirection * hoverSpeed;
-    if (arrowMeshRight.position.y > 1 + hoverHeight) {
+    if (titleMesh.position.x > 1 + hoverHeight) {
       hoverDirection = -1;
-    } else if (arrowMeshRight.position.y < 1 - hoverHeight) {
+    } else if (titleMesh.position.x < 1 - hoverHeight) {
       hoverDirection = 1;
     }
   }
-
   renderer.render(currentScene, currentCamera);
   renderer3DText.render(scene3DText, camera3DText);
-  renderer3DArrowRight.render(scene3DArrowRight, camera3DArrow);
-  renderer3DArrowLeft.render(scene3DArrowLeft, camera3DArrow);
+  
 }
