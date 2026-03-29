@@ -58,7 +58,7 @@ let sequence = [
     customSkybox: "/hdr/misty_pines_2k.hdr",
     description: "Wer bin ich heute? Wer will ich sein?",
     answer:
-      "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.  ",
+      "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et;",
     audio: "/audio/ambient.mp3",
   },
   {
@@ -78,10 +78,11 @@ let sequence = [
     startPosition: new THREE.Vector3(10, 0, 0),
     //'q' / 'w': 'e' / 'r' ,'t' / 'y'
     rotation: { x: -0.1, y: 0.1, z: 0.2 },
-    //bounds: { xpos: new Uniform(10), ypos: new Uniform(10), zpos: new Uniform(10), xneg: new Uniform(-10), yneg: new Uniform(-10), zneg: new Uniform(-10) },
+    bounds: { xpos: new Uniform(10), ypos: new Uniform(10), zpos: new Uniform(10), xneg: new Uniform(-10), yneg: new Uniform(-10), zneg: new Uniform(-10) },
     customSkybox: "/hdr/misty_pines_2k.hdr",
     description: "Welche träume hast du heute?",
-    answer: "",
+    answer: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy \n eirmod tempor invidunt ut labore et",
+    audio: "/audio/ambient.mp3",
   },
   {
     type: "image",
